@@ -33,6 +33,7 @@ dependencies {
   implementation project(':config')
   implementation project(':pki')
   implementation project(':consensus:clique')
+  implementation project(':consensus:repu')
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
   implementation project(':consensus:ibftlegacy')
@@ -78,7 +79,7 @@ dependencies {
   implementation 'org.xerial.snappy:snappy-java'
   implementation 'net.consensys.services:quorum-mainnet-launcher'
 
-  runtimeOnly 'org.apache.logging.log4j:log4j-jul'
+    runtimeOnly 'org.apache.logging.log4j:log4j-jul'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
   runtimeOnly 'org.fusesource.jansi:jansi' // for color logging in windows
 

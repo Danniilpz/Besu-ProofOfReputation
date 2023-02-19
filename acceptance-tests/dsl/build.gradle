@@ -2,6 +2,7 @@ dependencies {
   implementation project(':besu')
   implementation project(':config')
   implementation project(':consensus:clique')
+  implementation project(':consensus:repu')
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
   implementation project(':consensus:qbft')
@@ -45,4 +46,5 @@ dependencies {
   implementation 'org.web3j:crypto'
 
   implementation 'org.testcontainers:testcontainers'
+  implementation project(path: ':consensus:repu')
 }

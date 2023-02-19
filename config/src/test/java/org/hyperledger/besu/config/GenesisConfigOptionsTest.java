@@ -87,10 +87,25 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldUseRepuWhenCliqueInConfig() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("repu", emptyMap()));
+    assertThat(config.isRepu()).isTrue();
+    assertThat(config.getRepuConfigOptions()).isNotSameAs(RepuConfigOptions.DEFAULT);
+    assertThat(config.getConsensusEngine()).isEqualTo("repu");
+  }
+
+  @Test
   public void shouldNotUseCliqueIfCliqueNotPresent() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.isClique()).isFalse();
     assertThat(config.getCliqueConfigOptions()).isSameAs(CliqueConfigOptions.DEFAULT);
+  }
+
+  @Test
+  public void shouldNotUseRepuIfRepuNotPresent() {
+    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.isRepu()).isFalse();
+    assertThat(config.getRepuConfigOptions()).isSameAs(RepuConfigOptions.DEFAULT);
   }
 
   @Test
@@ -243,6 +258,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.isEthHash()).isFalse();
     assertThat(config.isIbftLegacy()).isFalse();
     assertThat(config.isClique()).isFalse();
+    assertThat(config.isRepu()).isFalse();
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
   }
 

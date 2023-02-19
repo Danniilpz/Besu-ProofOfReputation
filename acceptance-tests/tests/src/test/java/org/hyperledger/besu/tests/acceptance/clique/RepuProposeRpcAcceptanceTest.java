@@ -23,7 +23,7 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
+public class RepuProposeRpcAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldAddValidators() throws IOException {

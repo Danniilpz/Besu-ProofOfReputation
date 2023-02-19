@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toList;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.repu.RepuExtraData;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 
@@ -49,6 +50,13 @@ public class GenesisConfigurationFactory {
     final String template = readGenesisFile("/clique/clique.json");
     return updateGenesisExtraData(
         validators, template, CliqueExtraData::createGenesisExtraDataString);
+  }
+
+  public static Optional<String> createRepuGenesisConfig(
+          final Collection<? extends RunnableNode> validators) {
+    final String template = readGenesisFile("/repu/repu.json");
+    return updateGenesisExtraData(
+            validators, template, RepuExtraData::createGenesisExtraDataString);
   }
 
   public static Optional<String> createIbft2GenesisConfig(

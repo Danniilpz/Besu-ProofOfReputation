@@ -34,6 +34,7 @@ public enum RpcApis {
   PLUGINS,
   GOQUORUM,
   CLIQUE,
+  REPU,
   IBFT,
   ENGINE,
   QBFT;

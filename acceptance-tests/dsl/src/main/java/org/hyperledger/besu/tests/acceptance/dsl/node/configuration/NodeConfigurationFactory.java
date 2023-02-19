@@ -18,6 +18,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ADMIN;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.CLIQUE;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.REPU;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.IBFT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.MINER;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.QBFT;
@@ -46,6 +47,10 @@ public class NodeConfigurationFactory {
 
   public JsonRpcConfiguration createJsonRpcWithCliqueEnabledConfig() {
     return createJsonRpcWithRpcApiEnabledConfig(CLIQUE.name());
+  }
+
+  public JsonRpcConfiguration createJsonRpcWithRepuEnabledConfig() {
+    return createJsonRpcWithRpcApiEnabledConfig(REPU.name());
   }
 
   public JsonRpcConfiguration createJsonRpcWithIbft2EnabledConfig(final boolean minerEnabled) {

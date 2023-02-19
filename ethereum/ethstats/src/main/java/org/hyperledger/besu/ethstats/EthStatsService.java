@@ -31,6 +31,7 @@ import static org.hyperledger.besu.ethstats.request.EthStatsRequest.Type.STATS;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMiningCoordinator;
+import org.hyperledger.besu.consensus.repu.blockcreation.RepuMiningCoordinator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -357,6 +358,8 @@ public class EthStatsService {
     final boolean isMiningEnabled;
     if (miningCoordinator instanceof CliqueMiningCoordinator) {
       isMiningEnabled = ((CliqueMiningCoordinator) miningCoordinator).isSigner();
+    } else if (miningCoordinator instanceof RepuMiningCoordinator) {
+      isMiningEnabled = ((RepuMiningCoordinator) miningCoordinator).isSigner();
     } else {
       isMiningEnabled = miningCoordinator.isMining();
     }
