@@ -23,12 +23,27 @@ import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.ClientTransactionManager;
+import org.web3j.tx.gas.StaticGasProvider;
 
+import java.math.BigInteger;
 import java.util.function.Function;
 
 public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
 
+  private static final String HTTP_URL = "http://localhost:8545";
+  private static final String CONTRACT_ADDRESS = "0xF12b5dd4EAD5F743C6BaA640B0216200e89B60Da";
+  private static final BigInteger GAS_PRICE = new BigInteger("0");
+  private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
+  private static final Logger LOG = LoggerFactory.getLogger(BlockMiner.class);
+  private final HttpService httpService;
+  private final Web3j web3j;
   private final Address localAddress;
+  private final TestContract testContract;
 
   public CliqueBlockMiner(
       final Function<BlockHeader, CliqueBlockCreator> blockCreator,
@@ -40,15 +55,24 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
       final Address localAddress) {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
     this.localAddress = localAddress;
+    this.httpService = new HttpService(HTTP_URL);
+    this.web3j = Web3j.build(httpService);
+    testContract = new TestContract(CONTRACT_ADDRESS, web3j,
+            new ClientTransactionManager(web3j, localAddress.toHexString()), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
   }
 
   @Override
-  protected boolean mineBlock() throws InterruptedException {
+  protected boolean mineBlock() throws Exception {
     if (CliqueHelpers.addressIsAllowedToProduceNextBlock(
         localAddress, protocolContext, parentHeader)) {
+      LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber());
       return super.mineBlock();
     }
 
     return true; // terminate mining.
   }
+
+  public String testContractGetCount() throws Exception { return testContract.getCount().send().toString(); }
+
+  public String testContractGetNumber() throws Exception { return testContract.getNumber().send().toString(); }
 }
