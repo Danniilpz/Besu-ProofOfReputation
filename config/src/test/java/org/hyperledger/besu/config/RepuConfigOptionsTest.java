@@ -72,11 +72,11 @@ public class RepuConfigOptionsTest {
         .isInstanceOf(IllegalArgumentException.class);
   }
 
-  private RepuConfigOptions fromConfigOptions(final Map<String, Object> cliqueConfigOptions) {
+  private RepuConfigOptions fromConfigOptions(final Map<String, Object> repuConfigOptions) {
     final ObjectNode rootNode = JsonUtil.createEmptyObjectNode();
     final ObjectNode configNode = JsonUtil.createEmptyObjectNode();
-    final ObjectNode options = JsonUtil.objectNodeFromMap(cliqueConfigOptions);
-    configNode.set("clique", options);
+    final ObjectNode options = JsonUtil.objectNodeFromMap(repuConfigOptions);
+    configNode.set("repu", options);
     rootNode.set("config", configNode);
     return GenesisConfigFile.fromConfig(rootNode).getConfigOptions().getRepuConfigOptions();
   }

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.controller;
 
-import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.RepuConfigOptions;
 import org.hyperledger.besu.consensus.repu.RepuBlockInterface;
 import org.hyperledger.besu.consensus.repu.RepuContext;

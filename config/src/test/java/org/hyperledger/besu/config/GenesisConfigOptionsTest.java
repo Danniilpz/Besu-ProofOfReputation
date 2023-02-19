@@ -87,7 +87,7 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  public void shouldUseRepuWhenCliqueInConfig() {
+  public void shouldUseRepuWhenRepuInConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("repu", emptyMap()));
     assertThat(config.isRepu()).isTrue();
     assertThat(config.getRepuConfigOptions()).isNotSameAs(RepuConfigOptions.DEFAULT);
