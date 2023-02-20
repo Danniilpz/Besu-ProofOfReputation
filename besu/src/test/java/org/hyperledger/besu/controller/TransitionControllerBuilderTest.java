@@ -28,6 +28,7 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
+import org.hyperledger.besu.consensus.repu.RepuContext;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -58,7 +59,7 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
- * We only bother testing transitionControllerBuilder for PoW and Clique since those are the only
+ * We only bother testing transitionControllerBuilder for PoW, Repu and Clique since those are the only
  * network types that are transitioning to PoS.
  */
 @RunWith(MockitoJUnitRunner.class)
@@ -75,6 +76,7 @@ public class TransitionControllerBuilderTest {
   StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
   @Spy CliqueBesuControllerBuilder cliqueBuilder = new CliqueBesuControllerBuilder();
+  @Spy RepuBesuControllerBuilder repuBuilder = new RepuBesuControllerBuilder();
   @Spy BesuControllerBuilder powBuilder = new MainnetBesuControllerBuilder();
   @Spy MergeBesuControllerBuilder postMergeBuilder = new MergeBesuControllerBuilder();
   @Spy MiningParameters miningParameters = new MiningParameters.Builder().build();
@@ -88,12 +90,15 @@ public class TransitionControllerBuilderTest {
             new TransitionProtocolSchedule(
                 preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext));
     cliqueBuilder.nodeKey(NodeKeyUtils.generate());
+    repuBuilder.nodeKey(NodeKeyUtils.generate());
     postMergeBuilder.storageProvider(storageProvider);
     when(protocolContext.getBlockchain()).thenReturn(mockBlockchain);
     when(transitionProtocolSchedule.getPostMergeSchedule()).thenReturn(postMergeProtocolSchedule);
     when(transitionProtocolSchedule.getPreMergeSchedule()).thenReturn(preMergeProtocolSchedule);
     when(protocolContext.getConsensusContext(CliqueContext.class))
         .thenReturn(mock(CliqueContext.class));
+    when(protocolContext.getConsensusContext(RepuContext.class))
+            .thenReturn(mock(RepuContext.class));
     when(protocolContext.getConsensusContext(PostMergeContext.class)).thenReturn(mergeContext);
     when(protocolContext.getConsensusContext(MergeContext.class)).thenReturn(mergeContext);
   }
@@ -102,6 +107,13 @@ public class TransitionControllerBuilderTest {
   public void assertCliqueMiningOverridePreMerge() {
     assertThat(miningParameters.isMiningEnabled()).isFalse();
     var transCoordinator = buildTransitionCoordinator(cliqueBuilder, postMergeBuilder);
+    assertThat(transCoordinator.isMiningBeforeMerge()).isTrue();
+  }
+
+  @Test
+  public void assertRepuMiningOverridePreMerge() {
+    assertThat(miningParameters.isMiningEnabled()).isFalse();
+    var transCoordinator = buildTransitionCoordinator(repuBuilder, postMergeBuilder);
     assertThat(transCoordinator.isMiningBeforeMerge()).isTrue();
   }
 
@@ -193,6 +205,15 @@ public class TransitionControllerBuilderTest {
                 5L, new EpochManager(5L), Optional.of(FeeMarket.london(1L)), true)
             .build();
     assertDetachedRulesForPostMergeBlocks(cliqueValidator);
+  }
+
+  @Test
+  public void assertRepuDetachedHeaderValidationPreMerge() {
+    BlockHeaderValidator repuValidator =
+            org.hyperledger.besu.consensus.repu.BlockHeaderValidationRulesetFactory.repuBlockHeaderValidator(
+                            5L, new EpochManager(5L), Optional.of(FeeMarket.london(1L)), true)
+                    .build();
+    assertDetachedRulesForPostMergeBlocks(repuValidator);
   }
 
   @Test
