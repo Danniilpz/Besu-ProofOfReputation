@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.repu.blockcreation;
 
 import org.hyperledger.besu.consensus.repu.RepuHelpers;
+import org.hyperledger.besu.consensus.repu.contracts.TestContract;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
@@ -25,9 +26,10 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.ECKeyPair;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
-import org.web3j.tx.ClientTransactionManager;
 import org.web3j.tx.gas.StaticGasProvider;
 
 import java.math.BigInteger;
@@ -57,8 +59,11 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     this.localAddress = localAddress;
     this.httpService = new HttpService(HTTP_URL);
     this.web3j = Web3j.build(httpService);
+    //testContract = new TestContract(CONTRACT_ADDRESS, web3j,
+    //        new ClientTransactionManager(web3j, localAddress.toHexString()), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
     testContract = new TestContract(CONTRACT_ADDRESS, web3j,
-            new ClientTransactionManager(web3j, localAddress.toHexString()), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+            getUserInfo("0x3209e903cc83b120c0c8aebe93c29230559da7b2c4d63b05d90d357b6cf34525"), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+
   }
 
   @Override
@@ -66,7 +71,9 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     if (RepuHelpers.addressIsAllowedToProduceNextBlock(
         localAddress, protocolContext, parentHeader)) {
       LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber());
-      return super.mineBlock();
+      boolean result = super.mineBlock();
+      testContractIncrementCount();
+      return result;
     }
 
     return true; // terminate mining.
@@ -75,4 +82,14 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   public String testContractGetCount() throws Exception { return testContract.getCount().send().toString(); }
 
   public String testContractGetNumber() throws Exception { return testContract.getNumber().send().toString(); }
+
+  public void testContractIncrementCount() throws Exception { testContract.incrementCount().send(); }
+
+  private Credentials getUserInfo (String privateKeyInHex){
+    BigInteger privateKeyInBT = new BigInteger(privateKeyInHex, 16);
+    ECKeyPair aPair = ECKeyPair.create(privateKeyInBT);
+
+    return Credentials.create(aPair);
+  }
+
 }
