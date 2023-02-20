@@ -36,7 +36,7 @@ import java.util.function.Function;
 public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
   private static final String HTTP_URL = "http://localhost:8545";
-  private static final String CONTRACT_ADDRESS = "0xF12b5dd4EAD5F743C6BaA640B0216200e89B60Da";
+  private static final String CONTRACT_ADDRESS = "0x42699A7612A82f1d9C36148af9C77354759b210b";
   private static final BigInteger GAS_PRICE = new BigInteger("0");
   private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
   private static final Logger LOG = LoggerFactory.getLogger(BlockMiner.class);

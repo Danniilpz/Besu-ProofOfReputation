@@ -127,7 +127,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public boolean isRepu() { return configRoot.has(REPU_CONFIG_KEY); }
+  public boolean isRepu() {
+    return configRoot.has(REPU_CONFIG_KEY); }
 
   @Override
   public boolean isIbft2() {
@@ -470,6 +471,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
+    }
+    if (isRepu()) {
+      builder.put("repu", getRepuConfigOptions().asMap());
     }
     if (isEthHash()) {
       builder.put("ethash", getEthashConfigOptions().asMap());

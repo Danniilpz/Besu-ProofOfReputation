@@ -62,6 +62,4 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
-  implementation 'org.web3j:abi'
-  implementation 'org.web3j:besu'
 }
