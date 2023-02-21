@@ -18,8 +18,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.math.BigInteger;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.math.ec.ECPoint;
 
 public class SECPPrivateKey implements java.security.PrivateKey {
 
@@ -50,6 +53,12 @@ public class SECPPrivateKey implements java.security.PrivateKey {
 
     final SECPPrivateKey that = (SECPPrivateKey) other;
     return this.encoded.equals(that.encoded) && this.algorithm.equals(that.algorithm);
+  }
+
+  public ECPoint asEcPoint(final ECDomainParameters curve) {
+    // 0x04 is the prefix for uncompressed keys.
+    final Bytes val = Bytes.concatenate(Bytes.of(0x04), encoded);
+    return curve.getCurve().decodePoint(val.toArrayUnsafe());
   }
 
   @Override

@@ -18,6 +18,7 @@ import static org.hyperledger.besu.crypto.ECPointUtil.fromBouncyCastleECPoint;
 
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
+import org.hyperledger.besu.plugin.services.securitymodule.data.PrivateKey;
 import org.hyperledger.besu.plugin.services.securitymodule.data.PublicKey;
 import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
 
@@ -33,12 +34,14 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class KeyPairSecurityModule implements SecurityModule {
   private final KeyPair keyPair;
+  private final PrivateKey privateKey;
   private final PublicKey publicKey;
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
   public KeyPairSecurityModule(final KeyPair keyPair) {
     this.keyPair = keyPair;
     this.publicKey = convertPublicKey(keyPair.getPublicKey());
+    this.privateKey = convertPrivateKey(keyPair.getPrivateKey());
   }
 
   private PublicKey convertPublicKey(final SECPPublicKey publicKey) {
@@ -48,6 +51,16 @@ public class KeyPairSecurityModule implements SecurityModule {
     } catch (final Exception e) {
       throw new SecurityModuleException(
           "Unexpected error while converting ECPoint: " + e.getMessage(), e);
+    }
+  }
+
+  private PrivateKey convertPrivateKey(final SECPPrivateKey privateKey) {
+    try {
+      return new PrivateKeyImpl(
+              fromBouncyCastleECPoint(signatureAlgorithm.privateKeyAsEcPoint(privateKey)));
+    } catch (final Exception e) {
+      throw new SecurityModuleException(
+              "Unexpected error while converting ECPoint: " + e.getMessage(), e);
     }
   }
 
@@ -64,6 +77,11 @@ public class KeyPairSecurityModule implements SecurityModule {
   @Override
   public PublicKey getPublicKey() throws SecurityModuleException {
     return publicKey;
+  }
+
+  @Override
+  public PrivateKey getPrivateKey() throws SecurityModuleException {
+    return privateKey;
   }
 
   @Override
@@ -103,6 +121,19 @@ public class KeyPairSecurityModule implements SecurityModule {
     private final ECPoint w;
 
     PublicKeyImpl(final ECPoint w) {
+      this.w = w;
+    }
+
+    @Override
+    public ECPoint getW() {
+      return w;
+    }
+  }
+
+  private static class PrivateKeyImpl implements PrivateKey {
+    private final ECPoint w;
+
+    PrivateKeyImpl(final ECPoint w) {
       this.w = w;
     }
 

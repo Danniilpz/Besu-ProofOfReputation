@@ -57,13 +57,13 @@ public class TestContract extends Contract {
     super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
-  public TestContract(
+  /*public TestContract(
           String contractAddress,
           Web3j web3j,
           Credentials credentials,
           ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
-  }
+  }*/
 
   public RemoteFunctionCall<TransactionReceipt> incrementCount() {
     final org.web3j.abi.datatypes.Function function =

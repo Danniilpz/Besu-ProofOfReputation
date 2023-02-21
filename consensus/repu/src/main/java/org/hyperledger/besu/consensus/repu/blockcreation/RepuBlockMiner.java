@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.repu.blockcreation;
 
 import org.hyperledger.besu.consensus.repu.RepuHelpers;
 import org.hyperledger.besu.consensus.repu.contracts.TestContract;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
@@ -30,9 +31,11 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.ClientTransactionManager;
 import org.web3j.tx.gas.StaticGasProvider;
 
 import java.math.BigInteger;
+import java.nio.file.Paths;
 import java.util.function.Function;
 
 public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
@@ -46,6 +49,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   private final Web3j web3j;
   private final Address localAddress;
   private final TestContract testContract;
+  private final NodeKey nodeKey;
 
   public RepuBlockMiner(
       final Function<BlockHeader, RepuBlockCreator> blockCreator,
@@ -54,15 +58,17 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
       final Subscribers<MinedBlockObserver> observers,
       final AbstractBlockScheduler scheduler,
       final BlockHeader parentHeader,
-      final Address localAddress) {
+      final Address localAddress,
+      final NodeKey nodeKey) {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
+    this.nodeKey = nodeKey;
     this.localAddress = localAddress;
     this.httpService = new HttpService(HTTP_URL);
     this.web3j = Web3j.build(httpService);
-    //testContract = new TestContract(CONTRACT_ADDRESS, web3j,
-    //        new ClientTransactionManager(web3j, localAddress.toHexString()), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
     testContract = new TestContract(CONTRACT_ADDRESS, web3j,
-            getUserInfo("0x3209e903cc83b120c0c8aebe93c29230559da7b2c4d63b05d90d357b6cf34525"), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+            new ClientTransactionManager(web3j, localAddress.toHexString()), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+    //testContract = new TestContract(CONTRACT_ADDRESS, web3j,
+            //new Credentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
 
   }
 
@@ -70,9 +76,9 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   protected boolean mineBlock() throws Exception {
     if (RepuHelpers.addressIsAllowedToProduceNextBlock(
         localAddress, protocolContext, parentHeader)) {
-      LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber());
+      LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber()+" "+ nodeKey.getPrivateKey().toString());
       boolean result = super.mineBlock();
-      testContractIncrementCount();
+      //testContractIncrementCount();
       return result;
     }
 
@@ -85,11 +91,12 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
   public void testContractIncrementCount() throws Exception { testContract.incrementCount().send(); }
 
-  private Credentials getUserInfo (String privateKeyInHex){
+  /*private Credentials getUserInfo (String privateKeyInHex){
     BigInteger privateKeyInBT = new BigInteger(privateKeyInHex, 16);
     ECKeyPair aPair = ECKeyPair.create(privateKeyInBT);
 
     return Credentials.create(aPair);
-  }
+
+  }*/
 
 }

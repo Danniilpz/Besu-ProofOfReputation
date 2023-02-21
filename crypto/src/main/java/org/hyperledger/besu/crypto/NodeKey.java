@@ -40,6 +40,11 @@ public class NodeKey {
         ECPointUtil.getEncodedBytes(securityModule.getPublicKey().getW()));
   }
 
+  public SECPPrivateKey getPrivateKey() {
+    return signatureAlgorithm.createPrivateKey(
+            Bytes32.wrap(ECPointUtil.getEncodedBytes(securityModule.getPrivateKey().getW())));
+  }
+
   public Bytes32 calculateECDHKeyAgreement(final SECPPublicKey partyKey) {
     return securityModule.calculateECDHKeyAgreement(
         () -> ECPointUtil.fromBouncyCastleECPoint(signatureAlgorithm.publicKeyAsEcPoint(partyKey)));
