@@ -23,9 +23,9 @@ import java.security.spec.ECPoint;
 @FunctionalInterface
 public interface PrivateKey {
   /**
-   * The public point W.
+   * The private point W.
    *
-   * @return the public point W.
+   * @return the private point W.
    */
   ECPoint getW();
 }

@@ -41,8 +41,7 @@ public class NodeKey {
   }
 
   public SECPPrivateKey getPrivateKey() {
-    return signatureAlgorithm.createPrivateKey(
-            Bytes32.wrap(ECPointUtil.getEncodedBytes(securityModule.getPrivateKey().getW())));
+    return securityModule.getPrivateKey();
   }
 
   public Bytes32 calculateECDHKeyAgreement(final SECPPublicKey partyKey) {

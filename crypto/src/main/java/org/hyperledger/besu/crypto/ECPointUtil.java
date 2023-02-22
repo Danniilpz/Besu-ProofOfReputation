@@ -42,4 +42,5 @@ public class ECPointUtil {
     final Bytes yBytes = Bytes32.wrap(BigIntegers.asUnsignedByteArray(32, ecPoint.getAffineY()));
     return Bytes.concatenate(xBytes, yBytes);
   }
+
 }

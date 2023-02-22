@@ -34,14 +34,14 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class KeyPairSecurityModule implements SecurityModule {
   private final KeyPair keyPair;
-  private final PrivateKey privateKey;
+  private final SECPPrivateKey privateKey;
   private final PublicKey publicKey;
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
   public KeyPairSecurityModule(final KeyPair keyPair) {
     this.keyPair = keyPair;
     this.publicKey = convertPublicKey(keyPair.getPublicKey());
-    this.privateKey = convertPrivateKey(keyPair.getPrivateKey());
+    this.privateKey = keyPair.getPrivateKey();
   }
 
   private PublicKey convertPublicKey(final SECPPublicKey publicKey) {
@@ -79,8 +79,7 @@ public class KeyPairSecurityModule implements SecurityModule {
     return publicKey;
   }
 
-  @Override
-  public PrivateKey getPrivateKey() throws SecurityModuleException {
+  public SECPPrivateKey getPrivateKey() throws SecurityModuleException {
     return privateKey;
   }
 
