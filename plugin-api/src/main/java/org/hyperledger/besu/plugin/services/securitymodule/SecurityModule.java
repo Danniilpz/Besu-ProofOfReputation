@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services.securitymodule;
 
-import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.securitymodule.data.PrivateKey;
 import org.hyperledger.besu.plugin.services.securitymodule.data.PublicKey;
@@ -53,7 +52,7 @@ public interface SecurityModule {
    * @return the private key associated with the key stored behind this interface.
    * @throws SecurityModuleException if getPrivateKey fails
    */
-  SECPPrivateKey getPrivateKey() throws SecurityModuleException;
+  PrivateKey getPrivateKey();
   /**
    * Perform ECDH key agreement calculations.
    *

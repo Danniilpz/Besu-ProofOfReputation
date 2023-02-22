@@ -72,6 +72,10 @@ public class RepuBlockCreator extends AbstractBlockCreator {
     this.epochManager = epochManager;
   }
 
+  public NodeKey getNodeKey() {
+    return nodeKey;
+  }
+
   /**
    * Responsible for signing (hash of) the block (including MixHash and Nonce), and then injecting
    * the seal into the extraData. This is called after a suitable set of transactions have been

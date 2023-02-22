@@ -175,11 +175,6 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
   }
 
   @Override
-  public ECPoint privateKeyAsEcPoint(final SECPPrivateKey privateKey) {
-    return privateKey.asEcPoint(curve);
-  }
-
-  @Override
   public boolean isValidPublicKey(final SECPPublicKey publicKey) {
     try {
       publicKeyAsEcPoint(publicKey);

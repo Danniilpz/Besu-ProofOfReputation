@@ -40,15 +40,15 @@ import java.util.function.Function;
 
 public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
-  private static final String HTTP_URL = "http://localhost:8545";
-  private static final String CONTRACT_ADDRESS = "0x42699A7612A82f1d9C36148af9C77354759b210b";
-  private static final BigInteger GAS_PRICE = new BigInteger("0");
-  private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
+  //private static final String HTTP_URL = "http://localhost:8545";
+  //private static final String CONTRACT_ADDRESS = "0x42699A7612A82f1d9C36148af9C77354759b210b";
+  //private static final BigInteger GAS_PRICE = new BigInteger("0");
+  //private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
   private static final Logger LOG = LoggerFactory.getLogger(BlockMiner.class);
-  private final HttpService httpService;
-  private final Web3j web3j;
+  //private final HttpService httpService;
+  //private final Web3j web3j;
   private final Address localAddress;
-  private final TestContract testContract;
+  //private final TestContract testContract;
   private final NodeKey nodeKey;
 
   public RepuBlockMiner(
@@ -58,15 +58,14 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
       final Subscribers<MinedBlockObserver> observers,
       final AbstractBlockScheduler scheduler,
       final BlockHeader parentHeader,
-      final Address localAddress,
-      final NodeKey nodeKey) {
+      final Address localAddress) {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
-    this.nodeKey = nodeKey;
+    this.nodeKey = blockCreator.apply(parentHeader).getNodeKey();
     this.localAddress = localAddress;
-    this.httpService = new HttpService(HTTP_URL);
-    this.web3j = Web3j.build(httpService);
-    testContract = new TestContract(CONTRACT_ADDRESS, web3j,
-            new ClientTransactionManager(web3j, localAddress.toHexString()), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+    //this.httpService = new HttpService(HTTP_URL);
+    //this.web3j = Web3j.build(httpService);
+    //testContract = new TestContract(CONTRACT_ADDRESS, web3j,
+    //        new ClientTransactionManager(web3j, localAddress.toHexString()), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
     //testContract = new TestContract(CONTRACT_ADDRESS, web3j,
             //new Credentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
 
@@ -76,7 +75,8 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   protected boolean mineBlock() throws Exception {
     if (RepuHelpers.addressIsAllowedToProduceNextBlock(
         localAddress, protocolContext, parentHeader)) {
-      LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber()+" "+ nodeKey.getPrivateKey().toString());
+      LOG.info("privateKey: " + nodeKey.getPrivateKey().getKey());
+      //LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber()+" "+ nodeKey.getPrivateKey().getKey());
       boolean result = super.mineBlock();
       //testContractIncrementCount();
       return result;
@@ -85,11 +85,11 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     return true; // terminate mining.
   }
 
-  public String testContractGetCount() throws Exception { return testContract.getCount().send().toString(); }
+  //public String testContractGetCount() throws Exception { return testContract.getCount().send().toString(); }
 
-  public String testContractGetNumber() throws Exception { return testContract.getNumber().send().toString(); }
+  //public String testContractGetNumber() throws Exception { return testContract.getNumber().send().toString(); }
 
-  public void testContractIncrementCount() throws Exception { testContract.incrementCount().send(); }
+  //public void testContractIncrementCount() throws Exception { testContract.incrementCount().send(); }
 
   /*private Credentials getUserInfo (String privateKeyInHex){
     BigInteger privateKeyInBT = new BigInteger(privateKeyInHex, 16);

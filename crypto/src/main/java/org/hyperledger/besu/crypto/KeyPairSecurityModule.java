@@ -34,14 +34,14 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class KeyPairSecurityModule implements SecurityModule {
   private final KeyPair keyPair;
-  private final SECPPrivateKey privateKey;
+  private final PrivateKey privateKey;
   private final PublicKey publicKey;
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
   public KeyPairSecurityModule(final KeyPair keyPair) {
     this.keyPair = keyPair;
     this.publicKey = convertPublicKey(keyPair.getPublicKey());
-    this.privateKey = keyPair.getPrivateKey();
+    this.privateKey = convertPrivateKey(keyPair.getPrivateKey());
   }
 
   private PublicKey convertPublicKey(final SECPPublicKey publicKey) {
@@ -55,13 +55,7 @@ public class KeyPairSecurityModule implements SecurityModule {
   }
 
   private PrivateKey convertPrivateKey(final SECPPrivateKey privateKey) {
-    try {
-      return new PrivateKeyImpl(
-              fromBouncyCastleECPoint(signatureAlgorithm.privateKeyAsEcPoint(privateKey)));
-    } catch (final Exception e) {
-      throw new SecurityModuleException(
-              "Unexpected error while converting ECPoint: " + e.getMessage(), e);
-    }
+    return new PrivateKeyImpl(privateKey);
   }
 
   @Override
@@ -79,7 +73,8 @@ public class KeyPairSecurityModule implements SecurityModule {
     return publicKey;
   }
 
-  public SECPPrivateKey getPrivateKey() throws SecurityModuleException {
+  @Override
+  public PrivateKey getPrivateKey() throws SecurityModuleException {
     return privateKey;
   }
 
@@ -130,15 +125,15 @@ public class KeyPairSecurityModule implements SecurityModule {
   }
 
   private static class PrivateKeyImpl implements PrivateKey {
-    private final ECPoint w;
+    private final String key;
 
-    PrivateKeyImpl(final ECPoint w) {
-      this.w = w;
+    PrivateKeyImpl(final SECPPrivateKey key) {
+      this.key = key.toString();
     }
 
     @Override
-    public ECPoint getW() {
-      return w;
+    public String getKey() {
+      return key;
     }
   }
 }

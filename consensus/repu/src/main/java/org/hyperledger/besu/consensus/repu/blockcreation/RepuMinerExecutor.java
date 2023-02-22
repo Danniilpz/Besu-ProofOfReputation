@@ -88,8 +88,7 @@ public class RepuMinerExecutor extends AbstractMinerExecutor<RepuBlockMiner> {
         observers,
         blockScheduler,
         parentHeader,
-        localAddress,
-        nodeKey);
+        localAddress);
   }
 
   @Override

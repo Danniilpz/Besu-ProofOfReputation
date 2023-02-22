@@ -16,16 +16,14 @@ package org.hyperledger.besu.plugin.services.securitymodule.data;
 
 import org.hyperledger.besu.plugin.Unstable;
 
-import java.security.spec.ECPoint;
-
-/** Represents a PrivateKey function which provides ECPoint */
+/** Represents a PrivateKey function */
 @Unstable
 @FunctionalInterface
 public interface PrivateKey {
   /**
-   * The private point W.
+   * The private key.
    *
-   * @return the private point W.
+   * @return the private key.
    */
-  ECPoint getW();
+  String getKey();
 }
