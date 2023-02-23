@@ -28,27 +28,24 @@ import org.hyperledger.besu.util.Subscribers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Credentials;
-import org.web3j.crypto.ECKeyPair;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
-import org.web3j.tx.ClientTransactionManager;
 import org.web3j.tx.gas.StaticGasProvider;
 
 import java.math.BigInteger;
-import java.nio.file.Paths;
 import java.util.function.Function;
 
 public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
-  //private static final String HTTP_URL = "http://localhost:8545";
-  //private static final String CONTRACT_ADDRESS = "0x42699A7612A82f1d9C36148af9C77354759b210b";
-  //private static final BigInteger GAS_PRICE = new BigInteger("0");
-  //private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
+  private static final String HTTP_URL = "http://localhost:8545";
+  private static final String CONTRACT_ADDRESS = "0x4D2D24899c0B115a1fce8637FCa610Fe02f1909e";
+  private static final BigInteger GAS_PRICE = new BigInteger("500000");
+  private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
   private static final Logger LOG = LoggerFactory.getLogger(BlockMiner.class);
-  //private final HttpService httpService;
-  //private final Web3j web3j;
+  private final HttpService httpService;
+  private final Web3j web3j;
   private final Address localAddress;
-  //private final TestContract testContract;
+  private final TestContract testContract;
   private final NodeKey nodeKey;
 
   public RepuBlockMiner(
@@ -62,41 +59,34 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
     this.nodeKey = blockCreator.apply(parentHeader).getNodeKey();
     this.localAddress = localAddress;
-    //this.httpService = new HttpService(HTTP_URL);
-    //this.web3j = Web3j.build(httpService);
-    //testContract = new TestContract(CONTRACT_ADDRESS, web3j,
-    //        new ClientTransactionManager(web3j, localAddress.toHexString()), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
-    //testContract = new TestContract(CONTRACT_ADDRESS, web3j,
-            //new Credentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
-
+    this.httpService = new HttpService(HTTP_URL);
+    this.web3j = Web3j.build(httpService);
+    testContract = new TestContract(CONTRACT_ADDRESS, web3j,
+            getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
   }
 
   @Override
   protected boolean mineBlock() throws Exception {
     if (RepuHelpers.addressIsAllowedToProduceNextBlock(
         localAddress, protocolContext, parentHeader)) {
-      LOG.info("privateKey: " + nodeKey.getPrivateKey().getKey());
+      //LOG.info("privateKey: " + nodeKey.getPrivateKey().getKey());
       //LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber()+" "+ nodeKey.getPrivateKey().getKey());
+      LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber());
       boolean result = super.mineBlock();
-      //testContractIncrementCount();
+      testContractIncrementCount();
       return result;
     }
 
     return true; // terminate mining.
   }
 
-  //public String testContractGetCount() throws Exception { return testContract.getCount().send().toString(); }
+  public Credentials getCredentials(){
+    return Credentials.create(nodeKey.getPrivateKey().getKey(),nodeKey.getPublicKey().toString());
+  }
+  public String testContractGetCount() throws Exception { return testContract.getCount().send().toString(); }
 
-  //public String testContractGetNumber() throws Exception { return testContract.getNumber().send().toString(); }
+  public String testContractGetNumber() throws Exception { return testContract.getNumber().send().toString(); }
 
-  //public void testContractIncrementCount() throws Exception { testContract.incrementCount().send(); }
-
-  /*private Credentials getUserInfo (String privateKeyInHex){
-    BigInteger privateKeyInBT = new BigInteger(privateKeyInHex, 16);
-    ECKeyPair aPair = ECKeyPair.create(privateKeyInBT);
-
-    return Credentials.create(aPair);
-
-  }*/
+  public void testContractIncrementCount() throws Exception { testContract.incrementCount().send(); }
 
 }

@@ -21,7 +21,6 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteFunctionCall;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
-import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
 
 import java.math.BigInteger;
@@ -49,21 +48,21 @@ public class TestContract extends Contract {
 
   public static final String FUNC_GETNUMBER = "getNumber";
 
-  public TestContract(
+  /*public TestContract(
       final String contractAddress,
       final Web3j web3j,
       final TransactionManager transactionManager,
       final ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
-  }
+  }*/
 
-  /*public TestContract(
+  public TestContract(
           String contractAddress,
           Web3j web3j,
           Credentials credentials,
           ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
-  }*/
+  }
 
   public RemoteFunctionCall<TransactionReceipt> incrementCount() {
     final org.web3j.abi.datatypes.Function function =

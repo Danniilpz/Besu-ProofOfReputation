@@ -14,7 +14,7 @@
  */
 package org.hyperledger.errorpronechecks;
 
-import static com.google.errorprone.BugPattern.SeverityLevel.WARNING;
+import static com.google.errorprone.BugPattern.SeverityLevel.SUGGESTION;
 
 import javax.lang.model.element.Modifier;
 
@@ -33,7 +33,7 @@ import com.sun.source.tree.VariableTree;
 @AutoService(BugChecker.class)
 @BugPattern(
     summary = "Method input parameters must be final.",
-    severity = WARNING,
+    severity = SUGGESTION,
     linkType = BugPattern.LinkType.NONE)
 public class MethodInputParametersMustBeFinal extends BugChecker
     implements MethodTreeMatcher, ClassTreeMatcher {
