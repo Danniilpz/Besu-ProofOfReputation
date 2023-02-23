@@ -45,8 +45,8 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   private final HttpService httpService;
   private final Web3j web3j;
   private final Address localAddress;
-  private final TestContract testContract;
   private final NodeKey nodeKey;
+  private TestContract testContract;
 
   public RepuBlockMiner(
       final Function<BlockHeader, RepuBlockCreator> blockCreator,
@@ -69,11 +69,11 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   protected boolean mineBlock() throws Exception {
     if (RepuHelpers.addressIsAllowedToProduceNextBlock(
         localAddress, protocolContext, parentHeader)) {
-      //LOG.info("privateKey: " + nodeKey.getPrivateKey().getKey());
-      //LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber()+" "+ nodeKey.getPrivateKey().getKey());
-      LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber());
+      if(parentHeader.getNumber() == 0)
+        testContract = TestContract.deploy(web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
+      //LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber());
       boolean result = super.mineBlock();
-      testContractIncrementCount();
+      //testContractSetCount(5);
       return result;
     }
 
@@ -88,5 +88,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   public String testContractGetNumber() throws Exception { return testContract.getNumber().send().toString(); }
 
   public void testContractIncrementCount() throws Exception { testContract.incrementCount().send(); }
+
+  public void testContractSetCount(int count) throws Exception { testContract.setCount(new BigInteger(String.valueOf(count))).send(); }
 
 }
