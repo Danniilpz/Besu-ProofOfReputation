@@ -32,21 +32,32 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.StaticGasProvider;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.List;
 import java.util.function.Function;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
   private static final String HTTP_URL = "http://localhost:8545";
-  private static final String CONTRACT_ADDRESS = "0x4D2D24899c0B115a1fce8637FCa610Fe02f1909e";
+  private static final String CONTRACT_FILE = "repuContractAddress";
   private static final BigInteger GAS_PRICE = new BigInteger("500000");
   private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
-  private static final Logger LOG = LoggerFactory.getLogger(BlockMiner.class);
   private final HttpService httpService;
   private final Web3j web3j;
-  private final Address localAddress;
   private final NodeKey nodeKey;
-  private TestContract testContract;
+  private static TestContract testContract;
+  private static boolean contractDeployed = false;
+  private static boolean contractDeploying = false;
+  private final Address localAddress;
+  private static final Logger LOG = LoggerFactory.getLogger(BlockMiner.class);
 
   public RepuBlockMiner(
       final Function<BlockHeader, RepuBlockCreator> blockCreator,
@@ -57,27 +68,80 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
       final BlockHeader parentHeader,
       final Address localAddress) {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
-    this.nodeKey = blockCreator.apply(parentHeader).getNodeKey();
     this.localAddress = localAddress;
+    this.nodeKey = blockCreator.apply(parentHeader).getNodeKey();
     this.httpService = new HttpService(HTTP_URL);
     this.web3j = Web3j.build(httpService);
-    testContract = new TestContract(CONTRACT_ADDRESS, web3j,
-            getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+    try{
+      if (testContract == null) getRepuContract();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   protected boolean mineBlock() throws Exception {
     if (RepuHelpers.addressIsAllowedToProduceNextBlock(
         localAddress, protocolContext, parentHeader)) {
-      if(parentHeader.getNumber() == 0)
-        testContract = TestContract.deploy(web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
-      //LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber());
+
       boolean result = super.mineBlock();
-      //testContractSetCount(5);
+      if (!contractDeployed && !contractDeploying) {
+        deployRepuContract();
+      }
+      if(testContract != null){
+        LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber());
+        testContractIncrementCount();
+      }
       return result;
     }
 
     return true; // terminate mining.
+  }
+
+  public void getRepuContract() throws Exception {
+    Path contractPath = Paths.get(new File("./data").getCanonicalPath())
+            .resolve(CONTRACT_FILE);
+    if(consensusFileExists(contractPath)){
+      contractDeployed = true;
+      String address = readFile(contractPath);
+      testContract = new TestContract(address, web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+      LOG.info("Detected consensus contract in address {}",testContract.getContractAddress());
+    }
+    else{
+      testContract = null;
+      contractDeployed = false;
+    }
+
+  }
+
+  public void deployRepuContract() throws Exception {
+    contractDeploying = true;
+    Path nodeDirectoryPath = Paths.get(new File("./data").getCanonicalPath());
+
+    testContract = TestContract.deploy(web3j, getCredentials(),
+            new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
+    createFileAndWrite(nodeDirectoryPath, CONTRACT_FILE, testContract.getContractAddress());
+    LOG.info("Deployed consensus contract with address {}",testContract.getContractAddress());
+    contractDeployed = true;
+    contractDeploying =false;
+  }
+  private void createFileAndWrite(final Path directory, final String fileName, final String content) throws IOException {
+    final Path filePath = directory.resolve(fileName);
+    Files.write(filePath, content.getBytes(UTF_8), StandardOpenOption.CREATE_NEW);
+  }
+
+  private boolean consensusFileExists(final Path path){
+    return path.toFile().exists();
+  }
+
+  private String readFile(final Path path) throws IOException {
+    if(!consensusFileExists(path))
+      throw new IllegalArgumentException("Consensus contract address file does not exist.");
+
+    final List<String> info = Files.readAllLines(path);
+    if (info.size() != 1)
+      throw new IllegalArgumentException("Consensus contract address file has a invalid format.");
+    return info.get(0);
   }
 
   public Credentials getCredentials(){
@@ -89,6 +153,5 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
   public void testContractIncrementCount() throws Exception { testContract.incrementCount().send(); }
 
-  public void testContractSetCount(int count) throws Exception { testContract.setCount(new BigInteger(String.valueOf(count))).send(); }
-
+  public void testContractSetCount(final int count) throws Exception { testContract.setCount(new BigInteger(String.valueOf(count))).send(); }
 }
