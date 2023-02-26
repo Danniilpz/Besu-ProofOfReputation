@@ -27,7 +27,7 @@ import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
 
 import java.math.BigInteger;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 
 /**
@@ -69,39 +69,39 @@ public class TestContract extends Contract {
     super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
   }
 
-  public RemoteFunctionCall<TransactionReceipt> setCount(BigInteger count) {
+  public RemoteFunctionCall<TransactionReceipt> setCountCall(BigInteger count) {
     final org.web3j.abi.datatypes.Function function =
             new org.web3j.abi.datatypes.Function(
                     FUNC_SETCOUNT,
-                    Arrays.asList(new Uint256(count)),
+                    Collections.singletonList(new Uint256(count)),
                     Collections.emptyList());
     return executeRemoteCallTransaction(function);
   }
 
-  public RemoteFunctionCall<TransactionReceipt> incrementCount() {
+  public RemoteFunctionCall<TransactionReceipt> incrementCountCall() {
     final org.web3j.abi.datatypes.Function function =
             new org.web3j.abi.datatypes.Function(
                     FUNC_INCREMENTCOUNT,
-                    Arrays.asList(),
+                    Collections.emptyList(),
                     Collections.emptyList());
     return executeRemoteCallTransaction(function);
   }
 
-  public RemoteFunctionCall<BigInteger> getCount() {
+  public RemoteFunctionCall<BigInteger> getCountCall() {
     final org.web3j.abi.datatypes.Function function =
             new org.web3j.abi.datatypes.Function(
                     FUNC_GETCOUNT,
-                    Arrays.asList(),
-                    Arrays.asList(new TypeReference<Uint256>() {}));
+                    Collections.emptyList(),
+                    Collections.singletonList(new TypeReference<Uint256>() {}));
     return executeRemoteCallSingleValueReturn(function, BigInteger.class);
   }
 
-  public RemoteFunctionCall<BigInteger> getNumber() {
+  public RemoteFunctionCall<BigInteger> getNumberCall() {
     final org.web3j.abi.datatypes.Function function =
         new org.web3j.abi.datatypes.Function(
             FUNC_GETNUMBER,
-            Arrays.asList(),
-            Arrays.asList(new TypeReference<Uint256>() {}));
+            new ArrayList<>(),
+            Collections.singletonList(new TypeReference<Uint256>() {}));
     return executeRemoteCallSingleValueReturn(function, BigInteger.class);
   }
 
@@ -113,6 +113,15 @@ public class TestContract extends Contract {
             credentials,
             contractGasProvider,
             BINARY,
-            FunctionEncoder.encodeConstructor(Arrays.asList(new Uint256(0))));
+            FunctionEncoder.encodeConstructor(Collections.singletonList(new Uint256(0))));
   }
+
+  public String getCount() throws Exception { return this.getCountCall().send().toString(); }
+
+  public String getNumber() throws Exception { return this.getNumberCall().send().toString(); }
+
+  public void incrementCount() throws Exception { this.incrementCountCall().send(); }
+
+  public void setCount(final int count) throws Exception { this.setCountCall(new BigInteger(String.valueOf(count))).send(); }
+
 }

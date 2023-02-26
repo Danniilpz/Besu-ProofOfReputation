@@ -47,9 +47,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
   private static final String HTTP_URL = "http://localhost:8545";
-  private static final String CONTRACT_FILE = "repuContractAddress";
+  private static final String CONTRACT_FILENAME = "repuContractAddress";
   private static final BigInteger GAS_PRICE = new BigInteger("500000");
   private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
+  private static Path contractPath;
   private final Web3j web3j;
   private final NodeKey nodeKey;
   private static TestContract testContract;
@@ -71,6 +72,8 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     this.nodeKey = blockCreator.apply(parentHeader).getNodeKey();
     this.web3j = Web3j.build(new HttpService(HTTP_URL));
     try{
+      contractPath = Paths.get(new File("./data").getCanonicalPath())
+              .resolve(CONTRACT_FILENAME);
       if (testContract == null) getRepuContract();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -87,8 +90,8 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
       if (!contractDeployed && !contractDeploying)
         deployRepuContract();
       if(testContract != null) {
-        LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber());
-        testContractIncrementCount();
+        LOG.info("Count: "+ testContract.getCount() +" Number: "+testContract.getNumber());
+        testContract.incrementCount();
       }
       return mined;
     }
@@ -97,11 +100,9 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   }
 
   public void getRepuContract() throws Exception {
-    Path contractPath = Paths.get(new File("./data").getCanonicalPath())
-            .resolve(CONTRACT_FILE);
-    if(consensusFileExists(contractPath) && parentHeader.getNumber() > 1){
+    if(contractPath.toFile().exists() && parentHeader.getNumber() > 1){
       contractDeployed = true;
-      String address = readFile(contractPath);
+      String address = readAddress(contractPath);
       testContract = new TestContract(address, web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
       LOG.info("Detected consensus contract in address {}",testContract.getContractAddress());
     }
@@ -109,34 +110,22 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
       testContract = null;
       contractDeployed = false;
     }
-
   }
 
   public void deployRepuContract() throws Exception {
     contractDeploying = true;
-    Path nodeDirectoryPath = Paths.get(new File("./data").getCanonicalPath());
 
     testContract = TestContract.deploy(web3j, getCredentials(),
             new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
-    createFileAndWrite(nodeDirectoryPath, testContract.getContractAddress());
+
+    Files.write(contractPath, testContract.getContractAddress().getBytes(UTF_8), StandardOpenOption.CREATE);
     LOG.info("Deployed consensus contract with address {}",testContract.getContractAddress());
+
     contractDeployed = true;
     contractDeploying =false;
   }
 
-  private void createFileAndWrite(final Path directory, final String content) throws IOException {
-    final Path filePath = directory.resolve(CONTRACT_FILE);
-    Files.write(filePath, content.getBytes(UTF_8), StandardOpenOption.TRUNCATE_EXISTING);
-  }
-
-  private boolean consensusFileExists(final Path path){
-    return path.toFile().exists();
-  }
-
-  private String readFile(final Path path) throws IOException {
-    if(!consensusFileExists(path))
-      throw new IllegalArgumentException("Consensus contract address file does not exist.");
-
+  private String readAddress (final Path path) throws IOException {
     final List<String> info = Files.readAllLines(path);
     if (info.size() != 1)
       throw new IllegalArgumentException("Consensus contract address file has a invalid format.");
@@ -147,11 +136,4 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     return Credentials.create(nodeKey.getPrivateKey().getKey(),nodeKey.getPublicKey().toString());
   }
 
-  public String testContractGetCount() throws Exception { return testContract.getCount().send().toString(); }
-
-  public String testContractGetNumber() throws Exception { return testContract.getNumber().send().toString(); }
-
-  public void testContractIncrementCount() throws Exception { testContract.incrementCount().send(); }
-
-  public void testContractSetCount(final int count) throws Exception { testContract.setCount(new BigInteger(String.valueOf(count))).send(); }
 }
