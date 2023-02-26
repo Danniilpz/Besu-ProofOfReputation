@@ -44,6 +44,7 @@ public class RepuBlockCreator extends AbstractBlockCreator {
 
   private final NodeKey nodeKey;
   private final EpochManager epochManager;
+  private final String port;
 
   public RepuBlockCreator(
       final Address coinbase,
@@ -53,6 +54,7 @@ public class RepuBlockCreator extends AbstractBlockCreator {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final NodeKey nodeKey,
+      final String port,
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
@@ -69,11 +71,16 @@ public class RepuBlockCreator extends AbstractBlockCreator {
         minBlockOccupancyRatio,
         parentHeader);
     this.nodeKey = nodeKey;
+    this.port = port;
     this.epochManager = epochManager;
   }
 
   public NodeKey getNodeKey() {
     return nodeKey;
+  }
+
+  public String getPort() {
+    return port;
   }
 
   /**

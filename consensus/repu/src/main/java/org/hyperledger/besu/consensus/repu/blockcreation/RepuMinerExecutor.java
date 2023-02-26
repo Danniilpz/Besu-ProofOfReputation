@@ -45,6 +45,7 @@ public class RepuMinerExecutor extends AbstractMinerExecutor<RepuBlockMiner> {
 
   private final Address localAddress;
   private final NodeKey nodeKey;
+  private final String port;
   private final EpochManager epochManager;
 
   public RepuMinerExecutor(
@@ -52,11 +53,13 @@ public class RepuMinerExecutor extends AbstractMinerExecutor<RepuBlockMiner> {
       final ProtocolSchedule protocolSchedule,
       final AbstractPendingTransactionsSorter pendingTransactions,
       final NodeKey nodeKey,
+      final String port,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
       final EpochManager epochManager) {
     super(protocolContext, protocolSchedule, pendingTransactions, miningParams, blockScheduler);
     this.nodeKey = nodeKey;
+    this.port = port;
     this.localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     this.epochManager = epochManager;
   }
@@ -76,6 +79,7 @@ public class RepuMinerExecutor extends AbstractMinerExecutor<RepuBlockMiner> {
                 protocolContext,
                 protocolSchedule,
                 nodeKey,
+                port,
                 minTransactionGasPrice,
                 minBlockOccupancyRatio,
                 header,

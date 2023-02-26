@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.repu.blockcreation;
 
 import org.hyperledger.besu.consensus.repu.RepuHelpers;
-import org.hyperledger.besu.consensus.repu.contracts.TestContract;
+import org.hyperledger.besu.consensus.repu.contracts.TestContractRepu;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
@@ -46,17 +47,19 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
-  private static final String HTTP_URL = "http://localhost:8545";
-  private static final String CONTRACT_FILENAME = "repuContractAddress";
+
+  //private static final String CONTRACT_FILENAME = "repuContractAddress";
+private static final String CONTRACT_ADDRESS = "0x0000000000000000000000000000000000008888";
   private static final BigInteger GAS_PRICE = new BigInteger("500000");
   private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
-  private static Path contractPath;
   private final Web3j web3j;
   private final NodeKey nodeKey;
-  private static TestContract testContract;
-  private static boolean contractDeployed = false;
-  private static boolean contractDeploying = false;
+  private static TestContractRepu testContract;
+ // private static boolean contractDeployed = false;
+  //private static boolean contractDeploying = false;
   private final Address localAddress;
+  private final String httpUrl;
+  private final String port;
   private static final Logger LOG = LoggerFactory.getLogger(BlockMiner.class);
 
   public RepuBlockMiner(
@@ -70,10 +73,10 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
     this.localAddress = localAddress;
     this.nodeKey = blockCreator.apply(parentHeader).getNodeKey();
-    this.web3j = Web3j.build(new HttpService(HTTP_URL));
+    this.port = blockCreator.apply(parentHeader).getPort();
+    this.httpUrl = "http://localhost:" + port;
+    this.web3j = Web3j.build(new HttpService(httpUrl));
     try{
-      contractPath = Paths.get(new File("./data").getCanonicalPath())
-              .resolve(CONTRACT_FILENAME);
       if (testContract == null) getRepuContract();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -82,16 +85,24 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
   @Override
   protected boolean mineBlock() throws Exception {
-    if (RepuHelpers.addressIsAllowedToProduceNextBlock(
-        localAddress, protocolContext, parentHeader)) {
+    LOG.warn("I am "+localAddress.toString()+" with port "+port);
+    /*if ((!contractDeployed
+            && RepuHelpers.addressIsAllowedToProduceNextBlock(localAddress, protocolContext, parentHeader)) ||
+        (contractDeployed
+            && localAddress.toString().equals(testContract.nextValidator()))) {*/
+    if (RepuHelpers.addressIsAllowedToProduceNextBlock(localAddress, protocolContext, parentHeader)) {
 
       boolean mined = super.mineBlock();
 
-      if (!contractDeployed && !contractDeploying)
-        deployRepuContract();
-      if(testContract != null) {
+      /*if (!contractDeployed && !contractDeploying)
+        deployRepuContract();*/
+      /*if(testContract != null) {
         LOG.info("Count: "+ testContract.getCount() +" Number: "+testContract.getNumber());
         testContract.incrementCount();
+      }*/
+      if(testContract != null) {
+        LOG.info("Next validator: "+ testContract.nextValidator());
+        //testContract.updateValidator(getNextValidator());
       }
       return mined;
     }
@@ -99,23 +110,32 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     return true; // terminate mining.
   }
 
-  public void getRepuContract() throws Exception {
+  /*public String getNextValidator(){
+    List<String> list = Arrays.asList("0xdbe8422e428429e59c604a0ae614629b7794b924", "0x2ed64d60e50f820b240eb5905b0a73848b2506d6");
+    if(localAddress.toString().equals(list.get(0))) return list.get(1);
+    else return list.get(0);
+  }*/
+
+  public void getRepuContract()  {
+/*
+    Path contractPath = getContractPath();
     if(contractPath.toFile().exists() && parentHeader.getNumber() > 1){
       contractDeployed = true;
-      String address = readAddress(contractPath);
-      testContract = new TestContract(address, web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
-      LOG.info("Detected consensus contract in address {}",testContract.getContractAddress());
+      String address = readAddress(contractPath)*/;
+      testContract = new TestContractRepu(CONTRACT_ADDRESS, web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+      /*LOG.info("Detected consensus contract in address {}",testContract.getContractAddress());
     }
     else{
       testContract = null;
       contractDeployed = false;
-    }
+    }*/
   }
-
+/*
   public void deployRepuContract() throws Exception {
+    Path contractPath = getContractPath();
     contractDeploying = true;
 
-    testContract = TestContract.deploy(web3j, getCredentials(),
+    testContract = TestContractRepu.deploy(web3j, getCredentials(),
             new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
 
     Files.write(contractPath, testContract.getContractAddress().getBytes(UTF_8), StandardOpenOption.CREATE);
@@ -123,17 +143,22 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
     contractDeployed = true;
     contractDeploying =false;
-  }
+  }*/
 
-  private String readAddress (final Path path) throws IOException {
+/*  private String readAddress (final Path path) throws IOException {
     final List<String> info = Files.readAllLines(path);
     if (info.size() != 1)
       throw new IllegalArgumentException("Consensus contract address file has a invalid format.");
     return info.get(0);
   }
-
+*/
   public Credentials getCredentials(){
     return Credentials.create(nodeKey.getPrivateKey().getKey(),nodeKey.getPublicKey().toString());
   }
+
+ /* public Path getContractPath() throws IOException {
+    return Paths.get(new File("./data").getCanonicalPath())
+              .resolve(CONTRACT_FILENAME);
+  }*/
 
 }

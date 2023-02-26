@@ -2145,6 +2145,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .dataDirectory(dataDir())
+        .port(String.valueOf(jsonRPCHttpOptionGroup.rpcHttpPort))
         .miningParameters(
             new MiningParameters.Builder()
                 .coinbase(minerOptionGroup.coinbase)
