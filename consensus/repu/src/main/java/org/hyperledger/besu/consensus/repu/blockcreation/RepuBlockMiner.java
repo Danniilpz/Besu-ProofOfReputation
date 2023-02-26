@@ -50,7 +50,6 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   private static final String CONTRACT_FILE = "repuContractAddress";
   private static final BigInteger GAS_PRICE = new BigInteger("500000");
   private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
-  private final HttpService httpService;
   private final Web3j web3j;
   private final NodeKey nodeKey;
   private static TestContract testContract;
@@ -70,8 +69,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
     this.localAddress = localAddress;
     this.nodeKey = blockCreator.apply(parentHeader).getNodeKey();
-    this.httpService = new HttpService(HTTP_URL);
-    this.web3j = Web3j.build(httpService);
+    this.web3j = Web3j.build(new HttpService(HTTP_URL));
     try{
       if (testContract == null) getRepuContract();
     } catch (Exception e) {
@@ -84,15 +82,15 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     if (RepuHelpers.addressIsAllowedToProduceNextBlock(
         localAddress, protocolContext, parentHeader)) {
 
-      boolean result = super.mineBlock();
-      if (!contractDeployed && !contractDeploying) {
+      boolean mined = super.mineBlock();
+
+      if (!contractDeployed && !contractDeploying)
         deployRepuContract();
-      }
-      if(testContract != null){
+      if(testContract != null) {
         LOG.info("Count: "+testContractGetCount()+" Number: "+testContractGetNumber());
         testContractIncrementCount();
       }
-      return result;
+      return mined;
     }
 
     return true; // terminate mining.
@@ -101,7 +99,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   public void getRepuContract() throws Exception {
     Path contractPath = Paths.get(new File("./data").getCanonicalPath())
             .resolve(CONTRACT_FILE);
-    if(consensusFileExists(contractPath)){
+    if(consensusFileExists(contractPath) && parentHeader.getNumber() > 1){
       contractDeployed = true;
       String address = readFile(contractPath);
       testContract = new TestContract(address, web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
@@ -120,14 +118,15 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
     testContract = TestContract.deploy(web3j, getCredentials(),
             new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
-    createFileAndWrite(nodeDirectoryPath, CONTRACT_FILE, testContract.getContractAddress());
+    createFileAndWrite(nodeDirectoryPath, testContract.getContractAddress());
     LOG.info("Deployed consensus contract with address {}",testContract.getContractAddress());
     contractDeployed = true;
     contractDeploying =false;
   }
-  private void createFileAndWrite(final Path directory, final String fileName, final String content) throws IOException {
-    final Path filePath = directory.resolve(fileName);
-    Files.write(filePath, content.getBytes(UTF_8), StandardOpenOption.CREATE_NEW);
+
+  private void createFileAndWrite(final Path directory, final String content) throws IOException {
+    final Path filePath = directory.resolve(CONTRACT_FILE);
+    Files.write(filePath, content.getBytes(UTF_8), StandardOpenOption.TRUNCATE_EXISTING);
   }
 
   private boolean consensusFileExists(final Path path){
@@ -147,6 +146,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   public Credentials getCredentials(){
     return Credentials.create(nodeKey.getPrivateKey().getKey(),nodeKey.getPublicKey().toString());
   }
+
   public String testContractGetCount() throws Exception { return testContract.getCount().send().toString(); }
 
   public String testContractGetNumber() throws Exception { return testContract.getNumber().send().toString(); }
