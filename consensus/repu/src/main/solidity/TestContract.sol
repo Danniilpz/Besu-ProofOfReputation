@@ -4,10 +4,10 @@ pragma solidity >=0.7.0 <0.9.0;
 
 //Simple counter
 
-contract Counter{
+contract Contador{
     uint256 count;
-    constructor(uint256 _count) {
-        count=_count; 
+    constructor() {
+        count=0;
     }
     function setCount(uint256 _count) public {
         count=_count;
