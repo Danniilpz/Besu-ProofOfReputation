@@ -7,8 +7,8 @@ pragma solidity >=0.7.0 <0.9.0;
 contract Consensus{
     address validator;
 
-    constructor() {
-        validator = 0xdbE8422E428429E59c604A0Ae614629b7794B924;
+    constructor(address _addr) {
+        validator = _addr;
     }
 
     function nextValidator() public view returns (address){

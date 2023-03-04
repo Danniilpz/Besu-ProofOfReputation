@@ -41,8 +41,8 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   private final Web3j web3j;
   private final NodeKey nodeKey;
   private static TestContractRepu testContract;
-  //private static boolean contractDeployed = false;
-  //private static boolean contractDeploying = false;
+  private static boolean contractDeployed = false;
+  private static boolean contractDeploying = false;
   private final Address localAddress;
   private final String httpUrl;
   private final String port;
@@ -76,8 +76,8 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
       boolean mined = super.mineBlock();
 
-      /*if (!contractDeployed && !contractDeploying)
-        deployRepuContract();*/
+      if (!contractDeployed && !contractDeploying)
+        deployRepuContract();
       /*if(testContract != null) {
         LOG.info("Count: "+ testContract.getCount() +" Number: "+testContract.getNumber());
         testContract.incrementCount();
@@ -99,18 +99,18 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   }*/
 
   public void getRepuContract()  {
-/*
+
     if(parentHeader.getNumber() > 1){
       contractDeployed = true;
       testContract = new TestContractRepu(web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
-      /*LOG.info("Detected consensus contract in address {}",testContract.getContractAddress());
+      LOG.info("Detected consensus contract in address {}",testContract.getContractAddress());
     }
     else{
       testContract = null;
       contractDeployed = false;
-    }*/
+    }
   }
-/*
+
   public void deployRepuContract() throws Exception {
     contractDeploying = true;
 
@@ -126,5 +126,5 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   public Credentials getCredentials(){
     return Credentials.create(nodeKey.getPrivateKey().getKey(),nodeKey.getPublicKey().toString());
   }
-*/
+
 }
