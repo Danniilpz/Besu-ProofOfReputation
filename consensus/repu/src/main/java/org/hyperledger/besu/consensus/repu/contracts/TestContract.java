@@ -53,6 +53,8 @@ public class TestContract extends Contract {
 
   public static final String FUNC_GETNUMBER = "getNumber";
 
+  public static String CONTRACT_ADDRESS = "0x9c406dfc7c68231087cdc4f02c246b65ff1557b8";
+
   public TestContract(
       final String contractAddress,
       final Web3j web3j,
@@ -67,6 +69,13 @@ public class TestContract extends Contract {
           Credentials credentials,
           ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
+  }
+
+  public TestContract(
+          Web3j web3j,
+          Credentials credentials,
+          ContractGasProvider contractGasProvider) {
+    super(BINARY, CONTRACT_ADDRESS, web3j, credentials, contractGasProvider);
   }
 
   public RemoteFunctionCall<TransactionReceipt> setCountCall(BigInteger count) {
