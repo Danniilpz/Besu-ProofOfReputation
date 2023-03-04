@@ -31,31 +31,17 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.StaticGasProvider;
-
-import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.List;
 import java.util.function.Function;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
-
-  //private static final String CONTRACT_FILENAME = "repuContractAddress";
-private static final String CONTRACT_ADDRESS = "0x0000000000000000000000000000000000008888";
   private static final BigInteger GAS_PRICE = new BigInteger("500000");
   private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
   private final Web3j web3j;
   private final NodeKey nodeKey;
   private static TestContractRepu testContract;
- // private static boolean contractDeployed = false;
+  //private static boolean contractDeployed = false;
   //private static boolean contractDeploying = false;
   private final Address localAddress;
   private final String httpUrl;
@@ -76,11 +62,7 @@ private static final String CONTRACT_ADDRESS = "0x000000000000000000000000000000
     this.port = blockCreator.apply(parentHeader).getPort();
     this.httpUrl = "http://localhost:" + port;
     this.web3j = Web3j.build(new HttpService(httpUrl));
-    try{
-      if (testContract == null) getRepuContract();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    if (testContract == null) getRepuContract();
   }
 
   @Override
@@ -118,11 +100,9 @@ private static final String CONTRACT_ADDRESS = "0x000000000000000000000000000000
 
   public void getRepuContract()  {
 /*
-    Path contractPath = getContractPath();
-    if(contractPath.toFile().exists() && parentHeader.getNumber() > 1){
+    if(parentHeader.getNumber() > 1){
       contractDeployed = true;
-      String address = readAddress(contractPath)*/;
-      testContract = new TestContractRepu(CONTRACT_ADDRESS, web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+      testContract = new TestContractRepu(web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
       /*LOG.info("Detected consensus contract in address {}",testContract.getContractAddress());
     }
     else{
@@ -132,33 +112,19 @@ private static final String CONTRACT_ADDRESS = "0x000000000000000000000000000000
   }
 /*
   public void deployRepuContract() throws Exception {
-    Path contractPath = getContractPath();
     contractDeploying = true;
 
     testContract = TestContractRepu.deploy(web3j, getCredentials(),
             new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
 
-    Files.write(contractPath, testContract.getContractAddress().getBytes(UTF_8), StandardOpenOption.CREATE);
     LOG.info("Deployed consensus contract with address {}",testContract.getContractAddress());
 
     contractDeployed = true;
     contractDeploying =false;
-  }*/
-
-/*  private String readAddress (final Path path) throws IOException {
-    final List<String> info = Files.readAllLines(path);
-    if (info.size() != 1)
-      throw new IllegalArgumentException("Consensus contract address file has a invalid format.");
-    return info.get(0);
   }
-*/
+
   public Credentials getCredentials(){
     return Credentials.create(nodeKey.getPrivateKey().getKey(),nodeKey.getPublicKey().toString());
   }
-
- /* public Path getContractPath() throws IOException {
-    return Paths.get(new File("./data").getCanonicalPath())
-              .resolve(CONTRACT_FILENAME);
-  }*/
-
+*/
 }
