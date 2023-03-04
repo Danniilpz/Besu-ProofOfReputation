@@ -100,6 +100,7 @@ public class RepuMinerExecutorTest {
                 metricsSystem,
                 RepuMinerExecutorTest::mockBlockHeader),
             proposerNodeKey,
+            "8585",
             new MiningParameters.Builder()
                 .coinbase(AddressHelpers.ofValue(1))
                 .minTransactionGasPrice(Wei.ZERO)
@@ -142,6 +143,7 @@ public class RepuMinerExecutorTest {
                 metricsSystem,
                 RepuMinerExecutorTest::mockBlockHeader),
             proposerNodeKey,
+            "8585",
             new MiningParameters.Builder()
                 .coinbase(AddressHelpers.ofValue(1))
                 .minTransactionGasPrice(Wei.ZERO)
@@ -184,6 +186,7 @@ public class RepuMinerExecutorTest {
                 metricsSystem,
                 RepuMinerExecutorTest::mockBlockHeader),
             proposerNodeKey,
+            "8585",
             new MiningParameters.Builder()
                 .coinbase(AddressHelpers.ofValue(1))
                 .minTransactionGasPrice(Wei.ZERO)

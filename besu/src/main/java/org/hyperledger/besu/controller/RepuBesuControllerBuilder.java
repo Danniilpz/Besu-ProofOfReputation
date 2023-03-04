@@ -83,6 +83,7 @@ public class RepuBesuControllerBuilder extends BesuControllerBuilder {
             protocolSchedule,
             transactionPool.getPendingTransactions(),
             nodeKey,
+            port,
             miningParameters,
             new RepuBlockScheduler(
                 clock,

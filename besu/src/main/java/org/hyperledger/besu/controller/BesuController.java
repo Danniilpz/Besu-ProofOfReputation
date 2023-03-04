@@ -57,7 +57,6 @@ public class BesuController implements java.io.Closeable {
   private final NodeKey nodeKey;
   private final Synchronizer synchronizer;
   private final JsonRpcMethods additionalJsonRpcMethodsFactory;
-
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
   private final PrivacyParameters privacyParameters;
@@ -65,6 +64,7 @@ public class BesuController implements java.io.Closeable {
   private final MiningParameters miningParameters;
   private final PluginServiceFactory additionalPluginServices;
   private final SyncState syncState;
+  private final String port;
 
   BesuController(
       final ProtocolSchedule protocolSchedule,
@@ -81,7 +81,8 @@ public class BesuController implements java.io.Closeable {
       final JsonRpcMethods additionalJsonRpcMethodsFactory,
       final NodeKey nodeKey,
       final List<Closeable> closeables,
-      final PluginServiceFactory additionalPluginServices) {
+      final PluginServiceFactory additionalPluginServices,
+      final String port) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -97,6 +98,7 @@ public class BesuController implements java.io.Closeable {
     this.closeables = closeables;
     this.miningParameters = miningParameters;
     this.additionalPluginServices = additionalPluginServices;
+    this.port = port;
   }
 
   public ProtocolContext getProtocolContext() {
@@ -150,6 +152,10 @@ public class BesuController implements java.io.Closeable {
 
   public PrivacyParameters getPrivacyParameters() {
     return privacyParameters;
+  }
+
+  public String getPort() {
+    return port;
   }
 
   public MiningParameters getMiningParameters() {
