@@ -31,17 +31,12 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.StaticGasProvider;
-import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
 import java.util.function.Function;
 
 public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
   private static final String HTTP_URL = "http://localhost:8545";
-  private static final String CONTRACT_FILENAME = "repuContractAddress";
   private static final BigInteger GAS_PRICE = new BigInteger("500000");
   private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
   private final Web3j web3j;
