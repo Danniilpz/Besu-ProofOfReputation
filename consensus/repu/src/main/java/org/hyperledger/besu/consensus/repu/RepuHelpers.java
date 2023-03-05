@@ -17,16 +17,23 @@ package org.hyperledger.besu.consensus.repu;
 
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.repu.blockcreation.RepuProposerSelector;
+import org.hyperledger.besu.consensus.repu.contracts.TestRepuContract;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Objects;
 
 public class RepuHelpers {
+
+  public static TestRepuContract repuContract = null;
+
+  private static final Logger LOG = LoggerFactory.getLogger(RepuHelpers.class);
 
   public static Address getProposerOfBlock(final BlockHeader header) {
     final RepuExtraData extraData = RepuExtraData.decode(header);
@@ -39,26 +46,41 @@ public class RepuHelpers {
     return proposerSelector.selectProposerForNextBlock(parent);
   }
 
-  static boolean isSigner(
-      final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-    final Collection<Address> validators =
+  //static boolean isSigner(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent){
+  static boolean isSigner(final Address candidate){
+    /*final Collection<Address> validators =
         protocolContext
             .getConsensusContext(RepuContext.class)
             .getValidatorProvider()
-            .getValidatorsAfterBlock(parent);
-    return validators.contains(candidate);
+            .getValidatorsAfterBlock(parent);*/
+    try {
+      return repuContract.getValidators().contains(candidate.toString());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  public static boolean addressIsAllowedToProduceNextBlock(
-      final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-    final ValidatorProvider validatorProvider =
-        protocolContext.getConsensusContext(RepuContext.class).getValidatorProvider();
+  //public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
+  public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
 
-    if (!isSigner(candidate, protocolContext, parent)) {
-      return false;
+    if(repuContract == null){
+      if(Objects.equals(candidate.toString(), "0x1c21335d5e5d3f675d7eb7e19e943535555bb291")) return true;
+      else return false;
     }
+    else{
+      if (!isSigner(candidate)) return false;
+      try {
+        return candidate.toString().equals(repuContract.nextValidator());
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    /*final ValidatorProvider validatorProvider =
+        protocolContext.getConsensusContext(RepuContext.class).getValidatorProvider();*/
 
-    final int minimumUnsignedPastBlocks =
+    //if (!isSigner(candidate, protocolContext, parent)) {
+
+    /*final int minimumUnsignedPastBlocks =
         minimumBlocksSincePreviousSigning(parent, validatorProvider);
 
     final Blockchain blockchain = protocolContext.getBlockchain();
@@ -81,9 +103,9 @@ public class RepuHelpers {
           blockchain
               .getBlockHeader(localParent.getParentHash())
               .orElseThrow(() -> new IllegalStateException("The block was on a orphaned chain."));
-    }
+    }*/
 
-    return true;
+    //return true;
   }
 
   private static int minimumBlocksSincePreviousSigning(

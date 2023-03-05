@@ -42,7 +42,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   private final Web3j web3j;
   private final NodeKey nodeKey;
   private static ProxyContract proxyContract;
-  private static TestRepuContract testContract;
+  private static TestRepuContract repuContract;
   private static boolean contractDeployed = false;
   private static boolean contractDeploying = false;
   private final Address localAddress;
@@ -62,7 +62,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     String port = blockCreator.apply(parentHeader).getPort();
     String httpUrl = "http://localhost:" + port;
     this.web3j = Web3j.build(new HttpService(httpUrl));
-    if (testContract == null) {
+    if (repuContract == null) {
       try {
         getRepuContract();
       } catch (Exception e) {
@@ -83,13 +83,14 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
       boolean mined = super.mineBlock();
 
       if (!contractDeployed && !contractDeploying)
-        deployRepuContract();
+        deployContracts();
 
-      if(testContract != null) {
-        LOG.info("Next validator: "+ testContract.nextValidator());
-        LOG.info("Validators: "+ testContract.getValidators().toString());
-        //testContract.updateValidator();
+      if(repuContract != null) {
+        LOG.info("Next validator: "+ repuContract.nextValidator());
+        LOG.info("Validators: "+ repuContract.getValidators().toString());
+        repuContract.updateValidator();
       }
+      //if(proxyContract != null) LOG.info("Consensus address: "+ proxyContract.getConsensusAddress());
       return mined;
     }
 
@@ -98,32 +99,35 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
   public void getRepuContract() throws Exception {
 
-    if(parentHeader.getNumber() > 1){
+    if(!contractDeploying && parentHeader.getNumber() > 1){
       contractDeployed = true;
       proxyContract = new ProxyContract(web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
-      testContract =
+      repuContract =
           new TestRepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+
+      RepuHelpers.repuContract = repuContract;
 
       LOG.info("Detected consensus contract in address {}", proxyContract.getConsensusAddress());
     }
     else{
-      testContract = null;
+      repuContract = null;
       contractDeployed = false;
     }
   }
 
-  public void deployRepuContract() throws Exception {
+  public void deployContracts() throws Exception {
     contractDeploying = true;
 
     proxyContract = ProxyContract.deploy(web3j, getCredentials(),
             new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
 
-    testContract = TestRepuContract.deploy(web3j, getCredentials(),
+    repuContract = TestRepuContract.deploy(web3j, getCredentials(),
             new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
 
-    proxyContract.setConsensusAddress(testContract.getContractAddress());
+    RepuHelpers.repuContract = repuContract;
 
-    LOG.info("Deployed consensus contract with address {}",testContract.getContractAddress());
+    LOG.info("Deployed proxy contract into {} and consensus contract into {}",
+            proxyContract.getContractAddress(), repuContract.getContractAddress());
 
     contractDeployed = true;
     contractDeploying =false;

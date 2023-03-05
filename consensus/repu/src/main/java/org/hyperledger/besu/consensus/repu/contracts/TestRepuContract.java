@@ -45,8 +45,8 @@ public class TestRepuContract extends Contract {
   public static final String FUNC_NEXTVALIDATOR = "nextValidator";
   public static final String FUNC_GETVALIDATORS = "getValidators";
   public static final String FUNC_ADDVALIDATOR = "addValidator";
-  public static final String FUNC_UPDATEVALIDATOR = "updateValidators";
-  public static String CONTRACT_ADDRESS;
+  public static final String FUNC_UPDATEVALIDATOR = "updateValidator";
+  public static String INITIAL_ADDRESS = "0xb624d87403ac9f170ea9678a07051adc6fd7dc16";
 
   public TestRepuContract(
           String contractAddress,
@@ -54,7 +54,6 @@ public class TestRepuContract extends Contract {
           Credentials credentials,
           ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
-    CONTRACT_ADDRESS = contractAddress;
   }
 
   public RemoteFunctionCall<String> nextValidatorCall() {

@@ -2,18 +2,22 @@
 pragma solidity ^0.8.0;
 
 contract Proxy {
-    address private consensusContract;
+    address private consensusAddress;
+
+    constructor(address _addr) {
+        consensusAddress = _addr;
+    }
 
     modifier isAllowed{
-        require(consensusContract == 0x0000000000000000000000000000000000000000 || msg.sender == consensusContract, "You are not autorized");
+        require(msg.sender == consensusAddress, "You are not autorized");
         _;
     }
 
     function getConsensusAddress() public view returns (address) {
-        return consensusContract;
+        return consensusAddress;
     }
 
     function setConsensusAddress(address _addr) public isAllowed{
-        consensusContract = _addr;
+        consensusAddress = _addr;
     }
 }

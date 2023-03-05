@@ -37,7 +37,8 @@ public class RepuMiningTracker {
   }
 
   public boolean isSigner(final BlockHeader header) {
-    return RepuHelpers.isSigner(localAddress, protocolContext, header);
+    //return RepuHelpers.isSigner(localAddress, protocolContext, header);
+    return RepuHelpers.isSigner(localAddress);
   }
 
   public boolean canMakeBlockNextRound(final BlockHeader header) {
