@@ -36,13 +36,12 @@ public class RepuMiningTracker {
     return localAddress.equals(nextProposer);
   }
 
-  public boolean isSigner(final BlockHeader header) {
-    //return RepuHelpers.isSigner(localAddress, protocolContext, header);
+  public boolean isSigner() {
     return RepuHelpers.isSigner(localAddress);
   }
 
-  public boolean canMakeBlockNextRound(final BlockHeader header) {
-    return RepuHelpers.addressIsAllowedToProduceNextBlock(localAddress, protocolContext, header);
+  public boolean canMakeBlockNextRound() {
+    return RepuHelpers.addressIsAllowedToProduceNextBlock(localAddress);
   }
 
   public boolean blockCreatedLocally(final BlockHeader header) {

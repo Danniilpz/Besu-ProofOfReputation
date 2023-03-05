@@ -17,23 +17,32 @@ package org.hyperledger.besu.consensus.repu;
 
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.repu.blockcreation.RepuProposerSelector;
+import org.hyperledger.besu.consensus.repu.contracts.ProxyContract;
 import org.hyperledger.besu.consensus.repu.contracts.TestRepuContract;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Collection;
-import java.util.Comparator;
+import org.web3j.crypto.Credentials;
+import org.web3j.protocol.Web3j;
+import org.web3j.tx.gas.StaticGasProvider;
+import java.math.BigInteger;
+import java.util.List;
 import java.util.Objects;
 
 public class RepuHelpers {
 
-  public static TestRepuContract repuContract = null;
-
+  private static final BigInteger GAS_PRICE = new BigInteger("500000");
+  private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
+  private static Web3j web3j;
+  private static NodeKey nodeKey;
+  private static ProxyContract proxyContract;
+  private static TestRepuContract repuContract;
+  private static boolean contractDeployed = false;
+  private static boolean contractDeploying = false;
   private static final Logger LOG = LoggerFactory.getLogger(RepuHelpers.class);
+  private static final String INITIAL_NODE_ADDRESS = "0x1c21335d5e5d3f675d7eb7e19e943535555bb291";
 
   public static Address getProposerOfBlock(final BlockHeader header) {
     final RepuExtraData extraData = RepuExtraData.decode(header);
@@ -46,26 +55,19 @@ public class RepuHelpers {
     return proposerSelector.selectProposerForNextBlock(parent);
   }
 
-  //static boolean isSigner(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent){
   static boolean isSigner(final Address candidate){
-    /*final Collection<Address> validators =
-        protocolContext
-            .getConsensusContext(RepuContext.class)
-            .getValidatorProvider()
-            .getValidatorsAfterBlock(parent);*/
+    List<String> validators;
     try {
-      return repuContract.getValidators().contains(candidate.toString());
+      validators = repuContract.getValidators();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+    return validators.contains(candidate.toString());
   }
 
-  //public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-  public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-
+  public static boolean addressIsAllowedToProduceNextBlock(final Address candidate) {
     if(repuContract == null){
-      if(Objects.equals(candidate.toString(), "0x1c21335d5e5d3f675d7eb7e19e943535555bb291")) return true;
-      else return false;
+      return Objects.equals(candidate.toString(), INITIAL_NODE_ADDRESS);
     }
     else{
       if (!isSigner(candidate)) return false;
@@ -75,87 +77,70 @@ public class RepuHelpers {
         throw new RuntimeException(e);
       }
     }
-    /*final ValidatorProvider validatorProvider =
-        protocolContext.getConsensusContext(RepuContext.class).getValidatorProvider();*/
-
-    //if (!isSigner(candidate, protocolContext, parent)) {
-
-    /*final int minimumUnsignedPastBlocks =
-        minimumBlocksSincePreviousSigning(parent, validatorProvider);
-
-    final Blockchain blockchain = protocolContext.getBlockchain();
-    int unsignedBlockCount = 0;
-    BlockHeader localParent = parent;
-
-    while (unsignedBlockCount < minimumUnsignedPastBlocks) {
-
-      if (localParent.getNumber() == 0) {
-        return true;
-      }
-
-      final Address parentSigner = RepuHelpers.getProposerOfBlock(localParent);
-      if (parentSigner.equals(candidate)) {
-        return false;
-      }
-      unsignedBlockCount++;
-
-      localParent =
-          blockchain
-              .getBlockHeader(localParent.getParentHash())
-              .orElseThrow(() -> new IllegalStateException("The block was on a orphaned chain."));
-    }*/
-
-    //return true;
   }
 
-  private static int minimumBlocksSincePreviousSigning(
-      final BlockHeader parent, final ValidatorProvider validatorProvider) {
-    final int validatorCount = validatorProvider.getValidatorsAfterBlock(parent).size();
-    // The number of contiguous blocks in which a signer may only sign 1 (as taken from repu spec)
-    final int signerLimit = (validatorCount / 2) + 1;
-    return signerLimit - 1;
+  public static void setNodeKey(NodeKey nodeKey) {
+    RepuHelpers.nodeKey = nodeKey;
   }
 
-  public static void installRepuBlockChoiceRule(
-      final Blockchain blockchain, final RepuContext repuContext) {
-    blockchain.setBlockChoiceRule(
-        // EIP-3436 - https://eips.ethereum.org/EIPS/eip-3436
-        blockchain
-            // 1. Choose the block with the most total difficulty.
-            .getBlockChoiceRule()
-            // 2. Then choose the block with the lowest block number.
-            .thenComparing(Comparator.comparing(ProcessableBlockHeader::getNumber).reversed())
-            // 3. Then choose the block whose validator had the least recent in-turn block
-            // assignment.
-            .thenComparing((BlockHeader header) -> -distanceFromInTurn(header, repuContext))
-            // 4. Then choose the block with the lowest hash.
-            .thenComparing(Comparator.comparing(BlockHeader::getHash).reversed()));
+  public static void setWeb3j(Web3j web3j) {
+    RepuHelpers.web3j = web3j;
   }
 
-  /**
-   * Distance calculation from step 3 of the forck choice rule in EIP-3436
-   *
-   * <p>` (header_number - validator_index) % validator_count `
-   *
-   * @param header The block header to calculate distance
-   * @param context The repu context, holding validators last validaion
-   * @return the number of blocks from when the validator in that block was most recently "in turn"
-   */
-  static int distanceFromInTurn(final BlockHeader header, final RepuContext context) {
-    final Address proposer = RepuHelpers.getProposerOfBlock(header);
-    final Collection<Address> validators =
-        context.getValidatorProvider().getValidatorsAfterBlock(header);
+  public static void getRepuContract(BlockHeader parentHeader){
+    if(repuContract == null){
+      try{
+        if(!contractDeploying && parentHeader.getNumber() > 2){
+          contractDeployed = true;
+          proxyContract = new ProxyContract(web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+          repuContract =
+                  new TestRepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
 
-    // validators is an ordered collection, but as it is a tree set the only way to get an "index"
-    // is to walk the tree.
-    int index = 0;
-    for (final Address validator : validators) {
-      if (validator.equals(proposer)) {
-        break;
+          LOG.info("Detected consensus contract in address {}", proxyContract.getConsensusAddress());
+          //LOG.info("Validators: "+ repuContract.getValidators().toString());
+        }
+        else{
+          repuContract = null;
+          contractDeployed = false;
+        }
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
-      index++;
     }
-
-    return (int) (header.getNumber() - index) % validators.size();
   }
+
+  public static void deployContracts() throws Exception {
+    contractDeploying = true;
+
+    proxyContract = ProxyContract.deploy(web3j, getCredentials(),
+            new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
+
+    repuContract = TestRepuContract.deploy(web3j, getCredentials(),
+            new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
+
+    LOG.info("Deployed proxy contract into {} and consensus contract into {}",
+            proxyContract.getContractAddress(), repuContract.getContractAddress());
+
+    contractDeployed = true;
+    contractDeploying =false;
+  }
+
+  public static void checkDeployedContracts() throws Exception {
+    if (!contractDeployed && !contractDeploying)
+      deployContracts();
+  }
+
+  public static void printInfo() throws Exception {
+    if(repuContract != null) {
+      LOG.info("Next validator: "+ repuContract.nextValidator());
+      //LOG.info("Validators: "+ repuContract.getValidators().toString());
+      repuContract.updateValidator();
+    }
+  }
+
+  public static Credentials getCredentials(){
+    return Credentials.create(nodeKey.getPrivateKey().getKey(),nodeKey.getPublicKey().toString());
+  }
+
+
 }

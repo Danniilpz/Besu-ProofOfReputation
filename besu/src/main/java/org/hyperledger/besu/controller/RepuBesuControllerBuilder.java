@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.hyperledger.besu.consensus.repu.RepuHelpers.installRepuBlockChoiceRule;
 
 public class RepuBesuControllerBuilder extends BesuControllerBuilder {
 
@@ -134,14 +133,11 @@ public class RepuBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    final RepuContext repuContext =
-        new RepuContext(
-            BlockValidatorProvider.nonForkingValidatorProvider(
-                blockchain, epochManager, blockInterface),
-            epochManager,
-            blockInterface);
-    installRepuBlockChoiceRule(blockchain, repuContext);
-    return repuContext;
+    return new RepuContext(
+        BlockValidatorProvider.nonForkingValidatorProvider(
+            blockchain, epochManager, blockInterface),
+        epochManager,
+        blockInterface);
   }
 
   @Override

@@ -52,7 +52,7 @@ public class RepuMiningCoordinator extends AbstractMiningCoordinator<RepuBlockMi
   }
 
   public boolean isSigner() {
-    return miningTracker.isSigner(blockchain.getChainHeadHeader());
+    return miningTracker.isSigner();
   }
 
   @Override
@@ -75,7 +75,7 @@ public class RepuMiningCoordinator extends AbstractMiningCoordinator<RepuBlockMi
       return true;
     }
 
-    final boolean nodeIsMining = miningTracker.canMakeBlockNextRound(parentHeader);
+    final boolean nodeIsMining = miningTracker.canMakeBlockNextRound();
     final boolean nodeIsInTurn = miningTracker.isProposerAfter(parentHeader);
 
     return !nodeIsMining || !nodeIsInTurn;

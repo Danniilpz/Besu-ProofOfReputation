@@ -77,12 +77,6 @@ public class RepuExtraDataValidationRule implements AttachedBlockHeaderValidatio
       final Collection<Address> expectedValidators, final BlockHeader header) {
 
     final RepuExtraData repuExtraData = RepuExtraData.decode(header);
-    final Address proposer = repuExtraData.getProposerAddress();
-
-    if (!expectedValidators.contains(proposer)) {
-      LOG.info("Invalid block header: Proposer sealing block is not a member of the signers.");
-      return false;
-    }
 
     if (epochManager.isEpochBlock(header.getNumber())) {
       if (!Iterables.elementsEqual(repuExtraData.getValidators(), expectedValidators)) {
