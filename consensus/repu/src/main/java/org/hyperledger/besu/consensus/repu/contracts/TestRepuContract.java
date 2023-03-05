@@ -25,9 +25,7 @@ import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.RemoteFunctionCall;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
-import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -48,22 +46,7 @@ public class TestRepuContract extends Contract {
   public static final String FUNC_GETVALIDATORS = "getValidators";
   public static final String FUNC_ADDVALIDATOR = "addValidator";
   public static final String FUNC_UPDATEVALIDATOR = "updateValidators";
-  public static String CONTRACT_ADDRESS = "0x9c406dfc7c68231087cdc4f02c246b65ff1557b8";
-
-  public TestRepuContract(
-      final String contractAddress,
-      final Web3j web3j,
-      final TransactionManager transactionManager,
-      final ContractGasProvider contractGasProvider) {
-    super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
-  }
-
-  public TestRepuContract(
-          Web3j web3j,
-          Credentials credentials,
-          ContractGasProvider contractGasProvider) {
-    super(BINARY, CONTRACT_ADDRESS, web3j, credentials, contractGasProvider);
-  }
+  public static String CONTRACT_ADDRESS;
 
   public TestRepuContract(
           String contractAddress,
@@ -71,6 +54,7 @@ public class TestRepuContract extends Contract {
           Credentials credentials,
           ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
+    CONTRACT_ADDRESS = contractAddress;
   }
 
   public RemoteFunctionCall<String> nextValidatorCall() {
@@ -86,8 +70,8 @@ public class TestRepuContract extends Contract {
     final org.web3j.abi.datatypes.Function function =
             new org.web3j.abi.datatypes.Function(
                     FUNC_GETVALIDATORS,
-                    Arrays.<Type>asList(),
-                    Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Address>>() {}));
+                    Collections.emptyList(),
+                    Collections.singletonList(new TypeReference<DynamicArray<Address>>() {}));
     return new RemoteFunctionCall<List>(
             function,
             () -> {
@@ -125,7 +109,7 @@ public class TestRepuContract extends Contract {
             FunctionEncoder.encodeConstructor(Collections.emptyList()));
   }
 
-  public String nextValidator() throws Exception { return this.nextValidatorCall().send().toString(); }
+  public String nextValidator() throws Exception { return this.nextValidatorCall().send(); }
 
   public List<String> getValidators() throws Exception { return this.getValidatorsCall().send(); }
 

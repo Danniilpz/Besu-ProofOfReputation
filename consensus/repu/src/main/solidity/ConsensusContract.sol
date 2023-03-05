@@ -10,6 +10,7 @@ interface ConsensusContract {
     //modifier isValidator: address is on the list
     //periodic voting (timer modifier?) (when mapping is empty?)
     //timeout (java)
+    //update proxy
     function nextValidator() external view returns(address[]); //round-robin. returns a list of ordered addresses
     function addValidator(address _addr) external returns (bool success);
     function deleteValidator(address _addr) external returns (bool success);
