@@ -43,7 +43,7 @@ public class RepuGetSigners implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.CLIQUE_GET_SIGNERS.getMethodName();
+    return RpcMethod.REPU_GET_SIGNERS.getMethodName();
   }
 
   @Override

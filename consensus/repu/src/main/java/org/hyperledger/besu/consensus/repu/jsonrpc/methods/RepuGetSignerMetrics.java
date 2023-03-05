@@ -33,6 +33,6 @@ public class RepuGetSignerMetrics extends AbstractGetSignerMetricsMethod
 
   @Override
   public String getName() {
-    return RpcMethod.CLIQUE_GET_SIGNER_METRICS.getMethodName();
+    return RpcMethod.REPU_GET_SIGNER_METRICS.getMethodName();
   }
 }

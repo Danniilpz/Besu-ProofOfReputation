@@ -27,6 +27,6 @@ public class RepuProposals extends AbstractVoteProposerMethod implements JsonRpc
 
   @Override
   public String getName() {
-    return RpcMethod.CLIQUE_GET_PROPOSALS.getMethodName();
+    return RpcMethod.REPU_GET_PROPOSALS.getMethodName();
   }
 }

@@ -33,7 +33,7 @@ public class Discard implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.CLIQUE_DISCARD.getMethodName();
+    return RpcMethod.REPU_DISCARD.getMethodName();
   }
 
   @Override

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.repu.blockcreation;
 
 import org.hyperledger.besu.consensus.repu.RepuHelpers;
-import org.hyperledger.besu.consensus.repu.contracts.TestContractRepu;
+import org.hyperledger.besu.consensus.repu.contracts.TestRepuContract;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -40,7 +40,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
   private final Web3j web3j;
   private final NodeKey nodeKey;
-  private static TestContractRepu testContract;
+  private static TestRepuContract testContract;
   private static boolean contractDeployed = false;
   private static boolean contractDeploying = false;
   private final Address localAddress;
@@ -67,7 +67,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
   @Override
   protected boolean mineBlock() throws Exception {
-    LOG.warn("I am "+localAddress.toString()+" with port "+port);
+    //LOG.warn("I am "+localAddress.toString()+" with port "+port);
     /*if ((!contractDeployed
             && RepuHelpers.addressIsAllowedToProduceNextBlock(localAddress, protocolContext, parentHeader)) ||
         (contractDeployed
@@ -78,13 +78,11 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
       if (!contractDeployed && !contractDeploying)
         deployRepuContract();
-      /*if(testContract != null) {
-        LOG.info("Count: "+ testContract.getCount() +" Number: "+testContract.getNumber());
-        testContract.incrementCount();
-      }*/
+
       if(testContract != null) {
         LOG.info("Next validator: "+ testContract.nextValidator());
-        //testContract.updateValidator(getNextValidator());
+        LOG.info("Validators: "+ testContract.getValidators().toString());
+        //testContract.updateValidator();
       }
       return mined;
     }
@@ -92,17 +90,11 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     return true; // terminate mining.
   }
 
-  /*public String getNextValidator(){
-    List<String> list = Arrays.asList("0xdbe8422e428429e59c604a0ae614629b7794b924", "0x2ed64d60e50f820b240eb5905b0a73848b2506d6");
-    if(localAddress.toString().equals(list.get(0))) return list.get(1);
-    else return list.get(0);
-  }*/
-
   public void getRepuContract()  {
 
     if(parentHeader.getNumber() > 1){
       contractDeployed = true;
-      testContract = new TestContractRepu(web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+      testContract = new TestRepuContract(web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
       LOG.info("Detected consensus contract in address {}",testContract.getContractAddress());
     }
     else{
@@ -114,7 +106,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
   public void deployRepuContract() throws Exception {
     contractDeploying = true;
 
-    testContract = TestContractRepu.deploy(web3j, getCredentials(),
+    testContract = TestRepuContract.deploy(web3j, getCredentials(),
             new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
 
     LOG.info("Deployed consensus contract with address {}",testContract.getContractAddress());

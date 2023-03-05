@@ -36,7 +36,7 @@ public class Propose implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.CLIQUE_PROPOSE.getMethodName();
+    return RpcMethod.REPU_PROPOSE.getMethodName();
   }
 
   @Override

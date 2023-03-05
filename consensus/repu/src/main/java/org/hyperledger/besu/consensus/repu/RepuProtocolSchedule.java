@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.repu;
 
-import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.RepuConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;

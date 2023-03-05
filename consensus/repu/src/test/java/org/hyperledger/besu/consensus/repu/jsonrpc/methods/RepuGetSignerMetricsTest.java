@@ -42,7 +42,7 @@ public class RepuGetSignerMetricsTest {
     Address.fromHexString("0x1"), Address.fromHexString("0x2"), Address.fromHexString("0x3")
   };
 
-  private final String CLIQUE_METHOD = "repu_getSignerMetrics";
+  private final String REPU_METHOD = "repu_getSignerMetrics";
   private final String JSON_RPC_VERSION = "2.0";
   private RepuGetSignerMetrics method;
 
@@ -60,7 +60,7 @@ public class RepuGetSignerMetricsTest {
 
   @Test
   public void returnsCorrectMethodName() {
-    assertThat(method.getName()).isEqualTo(CLIQUE_METHOD);
+    assertThat(method.getName()).isEqualTo(REPU_METHOD);
   }
 
   @Test
@@ -231,7 +231,7 @@ public class RepuGetSignerMetricsTest {
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {
-    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, CLIQUE_METHOD, params));
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, REPU_METHOD, params));
   }
 
   private SignerMetricResult generateBlock(final long number) {

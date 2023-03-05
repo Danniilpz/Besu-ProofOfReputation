@@ -44,7 +44,7 @@ public class RepuJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   @Override
   protected String getApiGroup() {
-    return RpcApis.CLIQUE.name();
+    return RpcApis.REPU.name();
   }
 
   @Override

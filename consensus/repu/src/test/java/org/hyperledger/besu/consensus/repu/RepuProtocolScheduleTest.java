@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.repu;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.RepuConfigOptions;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
