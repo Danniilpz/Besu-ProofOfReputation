@@ -75,7 +75,7 @@ public class RepuMiningCoordinator extends AbstractMiningCoordinator<RepuBlockMi
       return true;
     }
 
-    final boolean nodeIsMining = miningTracker.canMakeBlockNextRound();
+    final boolean nodeIsMining = miningTracker.canMakeBlockNextRound(parentHeader);
     final boolean nodeIsInTurn = miningTracker.isProposerAfter(parentHeader);
 
     return !nodeIsMining || !nodeIsInTurn;

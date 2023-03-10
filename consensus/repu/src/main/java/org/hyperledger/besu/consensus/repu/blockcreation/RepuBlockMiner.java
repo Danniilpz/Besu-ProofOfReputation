@@ -53,7 +53,9 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
   @Override
   protected boolean mineBlock() throws Exception {
-    if (RepuHelpers.addressIsAllowedToProduceNextBlock(localAddress)) {
+    if (RepuHelpers.addressIsAllowedToProduceNextBlock(
+        localAddress, protocolContext, parentHeader)) {
+
       boolean mined = super.mineBlock();
 
       RepuHelpers.checkDeployedContracts();

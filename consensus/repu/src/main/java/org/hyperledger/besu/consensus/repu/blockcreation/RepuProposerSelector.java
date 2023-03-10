@@ -15,11 +15,9 @@
 package org.hyperledger.besu.consensus.repu.blockcreation;
 
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.repu.RepuHelpers;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -45,12 +43,23 @@ public class RepuProposerSelector {
    * @return The address of the node which is to propose a block for the provided Round.
    */
   public Address selectProposerForNextBlock(final BlockHeader parentHeader) {
-    final List<Address> validatorSet =
+    /*final List<Address> validatorSet =
         new ArrayList<>(validatorProvider.getValidatorsAfterBlock(parentHeader));
 
     final long nextBlockNumber = parentHeader.getNumber() + 1L;
     final int indexIntoValidators = (int) (nextBlockNumber % validatorSet.size());
 
-    return validatorSet.get(indexIntoValidators);
+    return validatorSet.get(indexIntoValidators);*/
+
+    if(RepuHelpers.repuContract == null){
+      return Address.fromHexString(RepuHelpers.INITIAL_NODE_ADDRESS);
+    }
+    else{
+      try {
+        return Address.fromHexString(RepuHelpers.repuContract.nextValidator());
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

@@ -4,10 +4,11 @@ pragma solidity >=0.7.0 <0.9.0;
 
 //Simple consensus contract test
 
-contract TestRepuContract{
+contract TestRepuContract {
     address[] validators;
     uint8 index;
 
+    //address proxy
     constructor() {
         validators.push(0x1c21335D5E5D3F675D7eB7e19E943535555Bb291);
         validators.push(0x2eD64d60E50f820B240EB5905B0a73848B2506d6);
