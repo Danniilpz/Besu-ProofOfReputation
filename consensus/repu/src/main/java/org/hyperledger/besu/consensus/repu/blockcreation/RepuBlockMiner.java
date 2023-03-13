@@ -53,6 +53,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
   @Override
   protected boolean mineBlock() throws Exception {
+    LOG.info("trying to mine");
     if (RepuHelpers.addressIsAllowedToProduceNextBlock(
         localAddress, protocolContext, parentHeader)) {
 
@@ -60,11 +61,14 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
       RepuHelpers.checkDeployedContracts();
 
-      RepuHelpers.printInfo();
+      RepuHelpers.updateList();
+
+      RepuHelpers.updateValidator();
 
       return mined;
     }
 
+    RepuHelpers.updateList();
     return true; // terminate mining.
   }
 

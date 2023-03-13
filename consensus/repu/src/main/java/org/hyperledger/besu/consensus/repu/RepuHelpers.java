@@ -31,7 +31,10 @@ import org.web3j.protocol.Web3j;
 import org.web3j.tx.gas.StaticGasProvider;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class RepuHelpers {
 
@@ -45,92 +48,74 @@ public class RepuHelpers {
     private static boolean contractDeploying = false;
     private static final Logger LOG = LoggerFactory.getLogger(RepuHelpers.class);
     public static final String INITIAL_NODE_ADDRESS = "0x1c21335d5e5d3f675d7eb7e19e943535555bb291";
+    public static String nextValidator;
+    public static Map<String,String> validations = Stream.of(new String[][] {
+            { "1", INITIAL_NODE_ADDRESS },
+            { "2", INITIAL_NODE_ADDRESS },
+            { "3", INITIAL_NODE_ADDRESS },
+    }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
-  public static Address getProposerOfBlock(final BlockHeader header) {
-    final RepuExtraData extraData = RepuExtraData.decode(header);
-    return extraData.getProposerAddress();
-  }
-
-  static Address getProposerForBlockAfter(
-      final BlockHeader parent, final ValidatorProvider validatorProvider) {
-    final RepuProposerSelector proposerSelector = new RepuProposerSelector(validatorProvider);
-    return proposerSelector.selectProposerForNextBlock(parent);
-  }
-
-  static boolean isSigner(final Address candidate){
-    List<String> validators;
-    try {
-      validators = repuContract.getValidators();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+    public static Address getProposerOfBlock(final BlockHeader header) {
+        final RepuExtraData extraData = RepuExtraData.decode(header);
+        return extraData.getProposerAddress();
     }
-    return validators.contains(candidate.toString());
-  }
 
-  public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-    /*if(repuContract == null){
-      return Objects.equals(candidate.toString(), INITIAL_NODE_ADDRESS);
+    static Address getProposerForBlockAfter(
+            final BlockHeader parent, final ValidatorProvider validatorProvider) {
+        final RepuProposerSelector proposerSelector = new RepuProposerSelector(validatorProvider);
+        return proposerSelector.selectProposerForNextBlock(parent);
     }
-    else{
-      if (!isSigner(candidate)) return false;
-      try {
-        return candidate.toString().equals(repuContract.nextValidator());
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }*/
-    if(repuContract == null) {
-      return Objects.equals(candidate.toString(), INITIAL_NODE_ADDRESS);
-    }
-    else{
-      if (!isSigner(candidate)) {
-        return false;
-      }
 
-      final int minimumUnsignedPastBlocks = 1;
-
-      final Blockchain blockchain = protocolContext.getBlockchain();
-      int unsignedBlockCount = 0;
-      BlockHeader localParent = parent;
-
-      while (unsignedBlockCount < minimumUnsignedPastBlocks) {
-
-        if (localParent.getNumber() == 0) {
-          return true;
+    static boolean isSigner(final Address candidate) {
+        List<String> validators;
+        try {
+            validators = repuContract.getValidators();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        final Address parentSigner = RepuHelpers.getProposerOfBlock(localParent);
-        if (parentSigner.equals(candidate)) {
-          return false;
-        }
-        unsignedBlockCount++;
-
-        localParent =
-                blockchain
-                        .getBlockHeader(localParent.getParentHash())
-                        .orElseThrow(() -> new IllegalStateException("The block was on a orphaned chain."));
-      }
-
-      return true;
+        return validators.contains(candidate.toString());
     }
-  }
 
-  public static void setNodeKey(NodeKey nodeKey) {
-    RepuHelpers.nodeKey = nodeKey;
-  }
+    public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
+        /*if (repuContract == null) {
+            return Objects.equals(candidate.toString(), INITIAL_NODE_ADDRESS);
+        } else {
+            if (!isSigner(candidate)) return false;
+            while(!Objects.equals(candidate.toString(), nextValidator)){}
+            //LOG.info(candidate.toString() + " " + nextValidator + "->" + r.toString());
+            return true;
+        }*/
+        //if(validations.containsKey(String.valueOf(parent.getNumber() + 1))) return false;
+        LOG.info(validations.toString());
+        while(!validations.containsKey(String.valueOf(parent.getNumber() + 1)));
 
-  public static void setWeb3j(Web3j web3j) {
-    RepuHelpers.web3j = web3j;
-  }
+        LOG.info("Block "+ (parent.getNumber() + 1) +"is allowed "+ validations.get(String.valueOf(parent.getNumber() + 1)));
 
-  public static void getRepuContract(BlockHeader parentHeader){
-    if(repuContract == null){
-      try{
-        if(!contractDeploying && parentHeader.getNumber() > 2){
-          contractDeployed = true;
-          proxyContract = new ProxyContract(web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
-          repuContract =
-                  new TestRepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+
+        return Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)));
+
+    }
+
+    public static void setNodeKey(NodeKey nodeKey) {
+        RepuHelpers.nodeKey = nodeKey;
+    }
+
+    public static void setWeb3j(Web3j web3j) {
+        RepuHelpers.web3j = web3j;
+    }
+
+    public static void getRepuContract(BlockHeader parentHeader) {
+        if (repuContract == null) {
+            try {
+                if (!contractDeploying && parentHeader.getNumber() > 2) {
+                    contractDeployed = true;
+                    proxyContract = new ProxyContract(web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+                    repuContract =
+                            new TestRepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+
+                    List<String> tmp = repuContract.nextValidatorBlock();
+                    validations.put(tmp.get(0), tmp.get(1));
+                    nextValidator = tmp.get(1);
 
                     LOG.info("Detected consensus contract in address {}", proxyContract.getConsensusAddress());
                     //LOG.info("Validators: "+ repuContract.getValidators().toString());
@@ -144,38 +129,52 @@ public class RepuHelpers {
         }
     }
 
-  public static void deployContracts() throws Exception {
-    contractDeploying = true;
+    public static void deployContracts() throws Exception {
+        contractDeploying = true;
 
-    proxyContract = ProxyContract.deploy(web3j, getCredentials(),
-            new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
+        proxyContract = ProxyContract.deploy(web3j, getCredentials(),
+                new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
 
-    repuContract = TestRepuContract.deploy(web3j, getCredentials(),
-            new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
+        repuContract = TestRepuContract.deploy(web3j, getCredentials(),
+                new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
 
-    LOG.info("Deployed proxy contract into {} and consensus contract into {}",
-            proxyContract.getContractAddress(), repuContract.getContractAddress());
+        List<String> tmp = repuContract.nextValidatorBlock();
+        validations.put(tmp.get(0), tmp.get(1));
+        nextValidator = tmp.get(1);
 
-    contractDeployed = true;
-    contractDeploying = false;
-  }
+        LOG.info("Deployed proxy contract into {} and consensus contract into {}",
+                proxyContract.getContractAddress(), repuContract.getContractAddress());
 
-  public static void checkDeployedContracts() throws Exception {
-    if (!contractDeployed && !contractDeploying)
-      deployContracts();
-  }
-
-  public static void printInfo() throws Exception {
-    if(repuContract != null) {
-      LOG.info("Next validator: " + repuContract.nextValidator());
-      //LOG.info("Validators: "+ repuContract.getValidators().toString());
-      repuContract.updateValidator();
+        contractDeployed = true;
+        contractDeploying = false;
     }
-  }
 
-  public static Credentials getCredentials(){
-    return Credentials.create(nodeKey.getPrivateKey().getKey(),nodeKey.getPublicKey().toString());
-  }
+    public static void checkDeployedContracts() throws Exception {
+        if (!contractDeployed && !contractDeploying)
+            deployContracts();
+    }
+
+    public static void updateValidator() throws Exception {
+        if (repuContract != null) {
+            repuContract.updateValidator();
+        }
+    }
+
+    public static Credentials getCredentials() {
+        return Credentials.create(nodeKey.getPrivateKey().getKey(), nodeKey.getPublicKey().toString());
+    }
 
 
+    public static void updateList() {
+        try {
+            if (repuContract != null){
+                List<String> tmp = repuContract.nextValidatorBlock();
+                validations.put(tmp.get(0), tmp.get(1));
+                nextValidator = tmp.get(1);
+                LOG.info("Next validator: " + nextValidator);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

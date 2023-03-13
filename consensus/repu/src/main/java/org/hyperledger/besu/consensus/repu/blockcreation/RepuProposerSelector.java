@@ -18,7 +18,6 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.repu.RepuHelpers;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -55,11 +54,7 @@ public class RepuProposerSelector {
       return Address.fromHexString(RepuHelpers.INITIAL_NODE_ADDRESS);
     }
     else{
-      try {
-        return Address.fromHexString(RepuHelpers.repuContract.nextValidator());
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      return Address.fromHexString(RepuHelpers.nextValidator);
     }
   }
 }
