@@ -59,16 +59,13 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
             boolean mined = super.mineBlock();
 
-            RepuHelpers.checkDeployedContracts();
-
-            RepuHelpers.updateList();
+            RepuHelpers.checkContractsAreDeployed();
 
             RepuHelpers.updateValidator();
 
             return mined;
         }
 
-        //RepuHelpers.updateList();
         return true; // terminate mining.
     }
 

@@ -15,12 +15,11 @@
 package org.hyperledger.besu.consensus.repu.jsonrpc.methods;
 
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.repu.RepuHelpers;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
@@ -48,15 +47,8 @@ public class RepuGetSignersAtHash implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Optional<BlockHeader> blockHeader = determineBlockHeader(requestContext);
-    return blockHeader
-        .map(validatorProvider::getValidatorsAfterBlock)
-        .map(addresses -> addresses.stream().map(Objects::toString).collect(Collectors.toList()))
-        .<JsonRpcResponse>map(
-            addresses -> new JsonRpcSuccessResponse(requestContext.getRequest().getId(), addresses))
-        .orElse(
-            new JsonRpcErrorResponse(
-                requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR));
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(),
+            RepuHelpers.getValidators().stream().map(Objects::toString).collect(Collectors.toList()));
   }
 
   private Optional<BlockHeader> determineBlockHeader(final JsonRpcRequestContext request) {

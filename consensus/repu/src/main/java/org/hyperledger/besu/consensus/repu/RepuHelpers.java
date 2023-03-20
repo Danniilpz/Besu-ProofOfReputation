@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.repu;
 
-
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.repu.blockcreation.RepuProposerSelector;
 import org.hyperledger.besu.consensus.repu.contracts.ProxyContract;
@@ -28,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.tx.gas.StaticGasProvider;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -98,7 +96,7 @@ public class RepuHelpers {
             updateList();
         }
 
-        LOG.info(validations.get(String.valueOf(parent.getNumber() + 1)) + " will validate block #" + (parent.getNumber() + 1));
+        //LOG.info(validations.get(String.valueOf(parent.getNumber() + 1)) + " will validate block #" + (parent.getNumber() + 1));
         return Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)));
     }
 
@@ -115,9 +113,11 @@ public class RepuHelpers {
             try {
                 if (!contractDeploying && parentHeader.getNumber() > 2) {
                     contractDeployed = true;
-                    proxyContract = new ProxyContract(web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
-                    repuContract =
-                            new TestRepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(), new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+
+                    proxyContract = new ProxyContract(web3j, getCredentials(),
+                            new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+                    repuContract =new TestRepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(),
+                            new StaticGasProvider(GAS_PRICE, GAS_LIMIT), proxyContract);
 
                     List<String> tmp = repuContract.nextValidatorBlock();
                     validations.put(tmp.get(0), tmp.get(1));
@@ -140,9 +140,9 @@ public class RepuHelpers {
 
         proxyContract = ProxyContract.deploy(web3j, getCredentials(),
                 new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
-
         repuContract = TestRepuContract.deploy(web3j, getCredentials(),
                 new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
+        repuContract.setProxyContract(proxyContract);
 
         List<String> tmp = repuContract.nextValidatorBlock();
         validations.put(tmp.get(0), tmp.get(1));
@@ -155,7 +155,7 @@ public class RepuHelpers {
         contractDeploying = false;
     }
 
-    public static void checkDeployedContracts() throws Exception {
+    public static void checkContractsAreDeployed() throws Exception {
         if (!contractDeployed && !contractDeploying)
             deployContracts();
     }

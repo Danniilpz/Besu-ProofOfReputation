@@ -8,17 +8,20 @@ contract TestRepuContract {
     address[] validators;
     uint256 currentBlock;
 
-    //address proxy
-    constructor() {
+    //atributo address proxy
+    constructor(uint256 _current) {
         validators.push(0x1c21335D5E5D3F675D7eB7e19E943535555Bb291);
         validators.push(0x2eD64d60E50f820B240EB5905B0a73848B2506d6);
         validators.push(0x11F8EBFF1B0fFb4dE7814Cc25430D01149fcDC71);
-        currentBlock = 4;
+        currentBlock = _current;
     }
 
-    function nextValidator() public view returns (address validator, uint256 block) {
-        validator = validators[currentBlock % validators.length];
-        block = currentBlock;
+    function nextValidator() public view returns (address) {
+        return validators[currentBlock % validators.length];
+    }
+
+    function nextBlock() public view returns (uint256) {
+        return currentBlock;
     }
 
     function getValidators() public view returns (address[] memory) {
@@ -30,7 +33,7 @@ contract TestRepuContract {
     }
 
     function updateValidators() public {
-        currentBlock++;
+        currentBlock++; //recibir numero de blockque como parametro
     }
 
     //function deleteValidator(address _addr) public {
