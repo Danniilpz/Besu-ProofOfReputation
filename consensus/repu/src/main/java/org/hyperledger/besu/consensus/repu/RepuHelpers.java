@@ -22,14 +22,15 @@ import org.hyperledger.besu.consensus.repu.contracts.TestRepuContract;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.tx.gas.StaticGasProvider;
+
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,10 +50,10 @@ public class RepuHelpers {
     private static final Logger LOG = LoggerFactory.getLogger(RepuHelpers.class);
     public static final String INITIAL_NODE_ADDRESS = "0x1c21335d5e5d3f675d7eb7e19e943535555bb291";
     public static String nextValidator;
-    public static Map<String,String> validations = Stream.of(new String[][] {
-            { "1", INITIAL_NODE_ADDRESS },
-            { "2", INITIAL_NODE_ADDRESS },
-            { "3", INITIAL_NODE_ADDRESS },
+    public static Map<String, String> validations = Stream.of(new String[][]{
+            {"1", INITIAL_NODE_ADDRESS},
+            {"2", INITIAL_NODE_ADDRESS},
+            {"3", INITIAL_NODE_ADDRESS},
     }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
     public static Address getProposerOfBlock(final BlockHeader header) {
@@ -76,24 +77,29 @@ public class RepuHelpers {
         return validators.contains(candidate.toString());
     }
 
-    public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-        /*if (repuContract == null) {
-            return Objects.equals(candidate.toString(), INITIAL_NODE_ADDRESS);
+    public static List<Address> getValidators() {
+        final List<Address> validators = new ArrayList<>();
+
+        if (RepuHelpers.repuContract == null) {
+            validators.add(Address.fromHexString(RepuHelpers.INITIAL_NODE_ADDRESS));
         } else {
-            if (!isSigner(candidate)) return false;
-            while(!Objects.equals(candidate.toString(), nextValidator)){}
-            //LOG.info(candidate.toString() + " " + nextValidator + "->" + r.toString());
-            return true;
-        }*/
-        //if(validations.containsKey(String.valueOf(parent.getNumber() + 1))) return false;
-        LOG.info(validations.toString());
-        while(!validations.containsKey(String.valueOf(parent.getNumber() + 1)));
+            try {
+                validators.addAll(RepuHelpers.repuContract.getValidators().stream().map(Address::fromHexString).collect(Collectors.toList()));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
 
-        LOG.info("Block "+ (parent.getNumber() + 1) +"is allowed "+ validations.get(String.valueOf(parent.getNumber() + 1)));
+        return validators;
+    }
 
+    public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
+        while (!validations.containsKey(String.valueOf(parent.getNumber() + 1))) {
+            updateList();
+        }
 
+        LOG.info(validations.get(String.valueOf(parent.getNumber() + 1)) + " will validate block #" + (parent.getNumber() + 1));
         return Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)));
-
     }
 
     public static void setNodeKey(NodeKey nodeKey) {
@@ -117,7 +123,7 @@ public class RepuHelpers {
                     validations.put(tmp.get(0), tmp.get(1));
                     nextValidator = tmp.get(1);
 
-                    LOG.info("Detected consensus contract in address {}", proxyContract.getConsensusAddress());
+                    //LOG.info("Detected consensus contract in address {}", proxyContract.getConsensusAddress());
                     //LOG.info("Validators: "+ repuContract.getValidators().toString());
                 } else {
                     repuContract = null;
@@ -142,8 +148,8 @@ public class RepuHelpers {
         validations.put(tmp.get(0), tmp.get(1));
         nextValidator = tmp.get(1);
 
-        LOG.info("Deployed proxy contract into {} and consensus contract into {}",
-                proxyContract.getContractAddress(), repuContract.getContractAddress());
+        //LOG.info("Deployed proxy contract into {} and consensus contract into {}",
+        //        proxyContract.getContractAddress(), repuContract.getContractAddress());
 
         contractDeployed = true;
         contractDeploying = false;
@@ -167,14 +173,15 @@ public class RepuHelpers {
 
     public static void updateList() {
         try {
-            if (repuContract != null){
+            if (repuContract != null) {
                 List<String> tmp = repuContract.nextValidatorBlock();
                 validations.put(tmp.get(0), tmp.get(1));
                 nextValidator = tmp.get(1);
-                LOG.info("Next validator: " + nextValidator);
+                //LOG.info("Next validator: " + nextValidator);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        //LOG.info(validations.toString());
     }
 }

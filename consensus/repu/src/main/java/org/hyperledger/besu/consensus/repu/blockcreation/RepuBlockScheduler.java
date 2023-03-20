@@ -26,48 +26,49 @@ import java.util.Random;
 
 public class RepuBlockScheduler extends DefaultBlockScheduler {
 
-  private final int OUT_OF_TURN_DELAY_MULTIPLIER_MILLIS = 500;
+    private final int OUT_OF_TURN_DELAY_MULTIPLIER_MILLIS = 500;
 
-  private final ValidatorProvider validatorProvider;
-  private final Address localNodeAddress;
-  private final Random r = new Random();
+    private final ValidatorProvider validatorProvider;
+    private final Address localNodeAddress;
+    private final Random r = new Random();
 
-  public RepuBlockScheduler(
-      final Clock clock,
-      final ValidatorProvider validatorProvider,
-      final Address localNodeAddress,
-      final long secondsBetweenBlocks) {
-    super(secondsBetweenBlocks, 0L, clock);
-    this.validatorProvider = validatorProvider;
-    this.localNodeAddress = localNodeAddress;
-  }
-
-  @Override
-  @VisibleForTesting
-  public BlockCreationTimeResult getNextTimestamp(final BlockHeader parentHeader) {
-    final BlockCreationTimeResult result = super.getNextTimestamp(parentHeader);
-
-    final long milliSecondsUntilNextBlock =
-        result.getMillisecondsUntilValid() + calculateTurnBasedDelay(parentHeader);
-
-    return new BlockCreationTimeResult(
-        result.getTimestampForHeader(), Math.max(0, milliSecondsUntilNextBlock));
-  }
-
-  private int calculateTurnBasedDelay(final BlockHeader parentHeader) {
-    final RepuProposerSelector proposerSelector = new RepuProposerSelector(validatorProvider);
-    final Address nextProposer = proposerSelector.selectProposerForNextBlock(parentHeader);
-
-    if (nextProposer.equals(localNodeAddress)) {
-      return 0;
+    public RepuBlockScheduler(
+            final Clock clock,
+            final ValidatorProvider validatorProvider,
+            final Address localNodeAddress,
+            final long secondsBetweenBlocks) {
+        super(secondsBetweenBlocks, 0L, clock);
+        this.validatorProvider = validatorProvider;
+        this.localNodeAddress = localNodeAddress;
     }
-    return calculatorOutOfTurnDelay(validatorProvider.getValidatorsAfterBlock(parentHeader));
-  }
 
-  private int calculatorOutOfTurnDelay(final Collection<Address> validators) {
-    final int countSigners = validators.size();
-    final double multiplier = (countSigners / 2d) + 1;
-    final int maxDelay = (int) (multiplier * OUT_OF_TURN_DELAY_MULTIPLIER_MILLIS);
-    return r.nextInt(maxDelay) + 1;
-  }
+    @Override
+    @VisibleForTesting
+    public BlockCreationTimeResult getNextTimestamp(final BlockHeader parentHeader) {
+        final BlockCreationTimeResult result = super.getNextTimestamp(parentHeader);
+
+        final long milliSecondsUntilNextBlock =
+                result.getMillisecondsUntilValid() + calculateTurnBasedDelay(parentHeader);
+
+        return new BlockCreationTimeResult(
+                result.getTimestampForHeader(), Math.max(0, milliSecondsUntilNextBlock));
+    }
+
+    private int calculateTurnBasedDelay(final BlockHeader parentHeader) {
+        final RepuProposerSelector proposerSelector = new RepuProposerSelector(validatorProvider);
+        final Address nextProposer = proposerSelector.selectProposerForNextBlock(parentHeader);
+
+        if (nextProposer.equals(localNodeAddress)) {
+            return 0;
+        }
+        //return calculatorOutOfTurnDelay(validatorProvider.getValidatorsAfterBlock(parentHeader));
+        return 1;
+    }
+
+    private int calculatorOutOfTurnDelay(final Collection<Address> validators) {
+        final int countSigners = validators.size();
+        final double multiplier = (countSigners / 2d) + 1;
+        final int maxDelay = (int) (multiplier * OUT_OF_TURN_DELAY_MULTIPLIER_MILLIS);
+        return r.nextInt(maxDelay) + 1;
+    }
 }

@@ -31,47 +31,46 @@ import java.util.function.Function;
 
 public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
-  private final Address localAddress;
-  private static final Logger LOG = LoggerFactory.getLogger(BlockMiner.class);
+    private final Address localAddress;
+    private static final Logger LOG = LoggerFactory.getLogger(BlockMiner.class);
 
-  public RepuBlockMiner(
-      final Function<BlockHeader, RepuBlockCreator> blockCreator,
-      final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext,
-      final Subscribers<MinedBlockObserver> observers,
-      final AbstractBlockScheduler scheduler,
-      final BlockHeader parentHeader,
-      final Address localAddress) {
-    super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
-    this.localAddress = localAddress;
-    RepuHelpers.setNodeKey(blockCreator.apply(parentHeader).getNodeKey());
-    String port = blockCreator.apply(parentHeader).getPort();
-    String httpUrl = "http://localhost:" + port;
-    RepuHelpers.setWeb3j(Web3j.build(new HttpService(httpUrl)));
-    RepuHelpers.getRepuContract(parentHeader);
-  }
-
-  @Override
-  protected boolean mineBlock() throws Exception {
-    LOG.info("trying to mine");
-    if (RepuHelpers.addressIsAllowedToProduceNextBlock(
-        localAddress, protocolContext, parentHeader)) {
-
-      boolean mined = super.mineBlock();
-
-      RepuHelpers.checkDeployedContracts();
-
-      RepuHelpers.updateList();
-
-      RepuHelpers.updateValidator();
-
-      return mined;
+    public RepuBlockMiner(
+            final Function<BlockHeader, RepuBlockCreator> blockCreator,
+            final ProtocolSchedule protocolSchedule,
+            final ProtocolContext protocolContext,
+            final Subscribers<MinedBlockObserver> observers,
+            final AbstractBlockScheduler scheduler,
+            final BlockHeader parentHeader,
+            final Address localAddress) {
+        super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
+        this.localAddress = localAddress;
+        RepuHelpers.setNodeKey(blockCreator.apply(parentHeader).getNodeKey());
+        String port = blockCreator.apply(parentHeader).getPort();
+        String httpUrl = "http://localhost:" + port;
+        RepuHelpers.setWeb3j(Web3j.build(new HttpService(httpUrl)));
+        RepuHelpers.getRepuContract(parentHeader);
     }
 
-    RepuHelpers.updateList();
-    return true; // terminate mining.
-  }
+    @Override
+    protected boolean mineBlock() throws Exception {
+        //LOG.info("trying to mine");
+        if (RepuHelpers.addressIsAllowedToProduceNextBlock(
+                localAddress, protocolContext, parentHeader)) {
 
+            boolean mined = super.mineBlock();
+
+            RepuHelpers.checkDeployedContracts();
+
+            RepuHelpers.updateList();
+
+            RepuHelpers.updateValidator();
+
+            return mined;
+        }
+
+        //RepuHelpers.updateList();
+        return true; // terminate mining.
+    }
 
 
 }
