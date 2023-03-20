@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Auto generated code.
@@ -52,16 +53,20 @@ public class TestRepuContract extends Contract {
   public static final String FUNC_ADDVALIDATOR = "addValidator";
   public static final String FUNC_UPDATEVALIDATOR = "updateValidators";
   public static String INITIAL_ADDRESS = "0xb624d87403ac9f170ea9678a07051adc6fd7dc16";
+  private ProxyContract proxyContract;
 
   public TestRepuContract(
           String contractAddress,
           Web3j web3j,
           Credentials credentials,
-          ContractGasProvider contractGasProvider) {
+          ContractGasProvider contractGasProvider,
+          ProxyContract proxyContract) {
     super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
+    this.proxyContract = proxyContract;
   }
 
   private RemoteFunctionCall<String> nextValidatorCall() {
+    this.checkAddress();
     final org.web3j.abi.datatypes.Function function =
             new org.web3j.abi.datatypes.Function(
                     FUNC_NEXTVALIDATOR,
@@ -71,6 +76,7 @@ public class TestRepuContract extends Contract {
   }
 
   private RemoteFunctionCall<BigInteger> nextBlockCall() {
+    this.checkAddress();
     final org.web3j.abi.datatypes.Function function =
             new org.web3j.abi.datatypes.Function(
                     FUNC_NEXTBLOCK,
@@ -80,6 +86,7 @@ public class TestRepuContract extends Contract {
   }
 
   private RemoteFunctionCall<List> getValidatorsCall() {
+    this.checkAddress();
     final org.web3j.abi.datatypes.Function function =
             new org.web3j.abi.datatypes.Function(
                     FUNC_GETVALIDATORS,
@@ -94,6 +101,7 @@ public class TestRepuContract extends Contract {
   }
 
   private RemoteFunctionCall<TransactionReceipt> addValidatorCall(String address) {
+    this.checkAddress();
     final org.web3j.abi.datatypes.Function function =
             new org.web3j.abi.datatypes.Function(
                     FUNC_ADDVALIDATOR,
@@ -103,6 +111,7 @@ public class TestRepuContract extends Contract {
   }
 
   private RemoteFunctionCall<TransactionReceipt> updateValidatorCall() {
+    this.checkAddress();
     final org.web3j.abi.datatypes.Function function =
             new org.web3j.abi.datatypes.Function(
                     FUNC_UPDATEVALIDATOR,
@@ -120,6 +129,20 @@ public class TestRepuContract extends Contract {
             contractGasProvider,
             BINARY,
             FunctionEncoder.encodeConstructor(Collections.emptyList()));
+  }
+
+  public void setProxyContract(ProxyContract proxyContract) {
+    this.proxyContract = proxyContract;
+  }
+
+  private void checkAddress(){
+    if(!Objects.equals(proxyContract.getContractAddress(), this.getContractAddress())) {
+      try {
+        this.setContractAddress(proxyContract.getConsensusAddress());
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   public String nextValidator() throws Exception { return this.nextValidatorCall().send(); }

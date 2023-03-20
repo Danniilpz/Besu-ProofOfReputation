@@ -42,14 +42,6 @@ public class RepuProposerSelector {
    * @return The address of the node which is to propose a block for the provided Round.
    */
   public Address selectProposerForNextBlock(final BlockHeader parentHeader) {
-    /*final List<Address> validatorSet =
-        new ArrayList<>(validatorProvider.getValidatorsAfterBlock(parentHeader));
-
-    final long nextBlockNumber = parentHeader.getNumber() + 1L;
-    final int indexIntoValidators = (int) (nextBlockNumber % validatorSet.size());
-
-    return validatorSet.get(indexIntoValidators);*/
-
     if(RepuHelpers.repuContract == null){
       return Address.fromHexString(RepuHelpers.INITIAL_NODE_ADDRESS);
     }
