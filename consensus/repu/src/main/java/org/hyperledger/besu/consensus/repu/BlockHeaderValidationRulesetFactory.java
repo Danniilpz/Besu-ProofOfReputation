@@ -70,7 +70,7 @@ public class BlockHeaderValidationRulesetFactory {
 
     final BlockHeaderValidator.Builder builder =
         new BlockHeaderValidator.Builder()
-            /*.addRule(new AncestryValidationRule())
+            .addRule(new AncestryValidationRule())
             .addRule(new TimestampBoundedByFutureParameter(10))
             .addRule(
                 new GasLimitRangeAndDeltaValidationRule(
@@ -78,11 +78,11 @@ public class BlockHeaderValidationRulesetFactory {
             .addRule(
                 new ConstantFieldValidationRule<>(
                     "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
-            //.addRule(new RepuExtraDataValidationRule(epochManager))
-            //.addRule(new RepuDifficultyValidationRule())
+            .addRule(new RepuExtraDataValidationRule(epochManager))
+            .addRule(new RepuDifficultyValidationRule())
             .addRule(new SignerRateLimitValidationRule())
             .addRule(new CoinbaseHeaderValidationRule(epochManager))
-            .addRule(new GasUsageValidationRule())*/;
+            .addRule(new GasUsageValidationRule());
 
     if (baseFeeMarket.isPresent()) {
       builder.addRule(new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket.get()));
@@ -93,14 +93,14 @@ public class BlockHeaderValidationRulesetFactory {
     var voteValidationRule = new VoteValidationRule();
     var repuTimestampRule = new TimestampMoreRecentThanParent(secondsBetweenBlocks);
 
-    /*if (isMergeEnabled) {
+    if (isMergeEnabled) {
       builder
           .addRule(new AttachedComposedFromDetachedRule(mixHashRule))
           .addRule(new AttachedComposedFromDetachedRule(voteValidationRule))
           .addRule(new AttachedComposedFromDetachedRule(repuTimestampRule));
     } else {
       builder.addRule(mixHashRule).addRule(voteValidationRule).addRule(repuTimestampRule);
-    }*/
+    }
 
     return builder;
   }

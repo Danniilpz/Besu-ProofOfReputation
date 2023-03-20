@@ -16,8 +16,8 @@ package org.hyperledger.besu.consensus.repu.headervalidationrules;
 
 import com.google.common.collect.Iterables;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.repu.RepuContext;
 import org.hyperledger.besu.consensus.repu.RepuExtraData;
+import org.hyperledger.besu.consensus.repu.RepuHelpers;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -54,11 +54,7 @@ public class RepuExtraDataValidationRule implements AttachedBlockHeaderValidatio
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     try {
-      final Collection<Address> storedValidators =
-          protocolContext
-              .getConsensusContext(RepuContext.class)
-              .getValidatorProvider()
-              .getValidatorsAfterBlock(parent);
+      final Collection<Address> storedValidators = RepuHelpers.getValidators();
 
       return extraDataIsValid(storedValidators, header);
 
