@@ -46,7 +46,7 @@ public class RepuProposerSelector {
       return Address.fromHexString(RepuHelpers.INITIAL_NODE_ADDRESS);
     }
     else{
-      return Address.fromHexString(RepuHelpers.nextValidator);
+      return Address.fromHexString(RepuHelpers.validations.get(String.valueOf(parentHeader.getNumber() + 1)));
     }
   }
 }
