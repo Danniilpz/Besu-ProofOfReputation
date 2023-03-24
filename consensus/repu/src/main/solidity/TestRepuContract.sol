@@ -9,16 +9,30 @@ contract TestRepuContract {
     uint256 index;
     address public proxy;
 
-    constructor() {
+    constructor(address _proxy) {
         validators.push(0x1c21335D5E5D3F675D7eB7e19E943535555Bb291);
         validators.push(0x2eD64d60E50f820B240EB5905B0a73848B2506d6);
         validators.push(0x11F8EBFF1B0fFb4dE7814Cc25430D01149fcDC71);
         index = 0;
-        proxy = 0x9C406DFc7C68231087cdC4F02C246B65fF1557b8;
+        proxy = _proxy;
     }
 
-    function nextValidator() public view returns (address) {
-        return validators[index % validators.length];
+    function nextValidators() public view returns (address[] memory) {
+        uint256 i = index % validators.length;
+        uint256 j = 0;
+        address[] memory list = new address[](validators.length);
+        while(i < validators.length){
+            list[j] = validators[i];
+            i++;
+            j++;
+        }
+        i = 0;
+        while(i < index % validators.length){
+            list[j] = validators[i];
+            i++;
+            j++;
+        }
+        return list;
     }
 
     function getValidators() public view returns (address[] memory) {

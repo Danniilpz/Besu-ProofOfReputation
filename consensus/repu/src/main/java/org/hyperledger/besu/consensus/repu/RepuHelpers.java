@@ -118,7 +118,7 @@ public class RepuHelpers {
                     repuContract =new TestRepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(),
                             new StaticGasProvider(GAS_PRICE, GAS_LIMIT), proxyContract);
 
-                    validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidator());
+                    validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
 
                     //LOG.info("Detected consensus contract in address {}", proxyContract.getConsensusAddress());
                     //LOG.info("Validators: "+ repuContract.getValidators().toString());
@@ -141,7 +141,7 @@ public class RepuHelpers {
                 new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
         repuContract.setProxyContract(proxyContract);
 
-        validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidator());
+        validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
 
         //LOG.info("Deployed proxy contract into {} and consensus contract into {}",
         //        proxyContract.getContractAddress(), repuContract.getContractAddress());
@@ -169,7 +169,7 @@ public class RepuHelpers {
     public static void updateList(BlockHeader parentHeader) {
         try {
             if (repuContract != null) {
-                validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidator());
+                validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
                 //LOG.info("Next validator: " + nextValidator);
             }
         } catch (Exception e) {
