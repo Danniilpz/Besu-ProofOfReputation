@@ -8,6 +8,7 @@ contract TestRepuContract {
     address[] validators;
     uint256 index;
     address public proxy;
+    uint256 lastBlock;
 
     constructor(address _proxy) {
         validators.push(0x1c21335D5E5D3F675D7eB7e19E943535555Bb291);
@@ -15,6 +16,7 @@ contract TestRepuContract {
         validators.push(0x11F8EBFF1B0fFb4dE7814Cc25430D01149fcDC71);
         index = 0;
         proxy = _proxy;
+        lastBlock = 0;
     }
 
     function nextValidators() public view returns (address[] memory) {
@@ -39,12 +41,17 @@ contract TestRepuContract {
         return validators;
     }
 
+    function getLastBlock() public view returns (uint256){
+        return lastBlock;
+    }
+
     function addValidator(address _addr) public {
         validators.push(_addr);
     }
 
-    function updateValidators() public {
+    function updateValidators(uint256 lastBlock) public {
         index++;
+        lastBlock = _block;
     }
 
     //function deleteValidator(address _addr) public {

@@ -47,6 +47,7 @@ public class RepuHelpers {
     private static boolean contractDeploying = false;
     private static final Logger LOG = LoggerFactory.getLogger(RepuHelpers.class);
     public static final String INITIAL_NODE_ADDRESS = "0x1c21335d5e5d3f675d7eb7e19e943535555bb291";
+    public static int validatorIndex = 0;
     public static Map<String, String> validations = Stream.of(new String[][]{
             {"1", INITIAL_NODE_ADDRESS},
             {"2", INITIAL_NODE_ADDRESS},
@@ -95,8 +96,26 @@ public class RepuHelpers {
             updateList(parent);
         }
 
+        boolean isAllowed = Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)));
+
+        if(!isAllowed && repuContract != null){
+            long startTime = System.currentTimeMillis();
+            try {
+                while(repuContract.getLastBlock() != (parent.getNumber() + 1)
+                        && ((System.currentTimeMillis() - startTime) < 20000)){}
+
+                if(repuContract.getLastBlock() != (parent.getNumber() + 1)){
+                    validatorIndex++;
+                    updateList(parent);
+                    isAllowed = Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)));
+                }
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
         //LOG.info(validations.get(String.valueOf(parent.getNumber() + 1)) + " will validate block #" + (parent.getNumber() + 1));
-        return Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)));
+        return isAllowed;
     }
 
     public static void setNodeKey(NodeKey nodeKey) {
@@ -155,9 +174,9 @@ public class RepuHelpers {
             deployContracts(parent);
     }
 
-    public static void updateValidator() throws Exception {
+    public static void updateValidator(long block) throws Exception {
         if (repuContract != null) {
-            repuContract.updateValidator();
+            repuContract.updateValidators(new BigInteger(String.valueOf(block)));
         }
     }
 
@@ -169,7 +188,8 @@ public class RepuHelpers {
     public static void updateList(BlockHeader parentHeader) {
         try {
             if (repuContract != null) {
-                validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
+                List<String> nextValidators = repuContract.nextValidators();
+                validations.put(String.valueOf(parentHeader.getNumber() + 1), nextValidators.get(validatorIndex % nextValidators.size()));
                 //LOG.info("Next validator: " + nextValidator);
             }
         } catch (Exception e) {
@@ -177,4 +197,6 @@ public class RepuHelpers {
         }
         //LOG.info(validations.toString());
     }
+
+
 }

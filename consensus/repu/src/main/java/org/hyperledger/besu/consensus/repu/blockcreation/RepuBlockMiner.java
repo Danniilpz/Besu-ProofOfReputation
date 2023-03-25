@@ -61,7 +61,9 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
             RepuHelpers.checkContractsAreDeployed(parentHeader);
 
-            RepuHelpers.updateValidator();
+            RepuHelpers.updateValidator(parentHeader.getNumber() + 1);
+
+            RepuHelpers.validatorIndex = 0;
 
             return mined;
         }
