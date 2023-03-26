@@ -7,17 +7,16 @@ pragma solidity >=0.7.0 <0.9.0;
 contract RepuContract{
 
     mapping (address => uint256) public validators_reputation;
-    address[] validators;
+    address[] private validators;
 
     mapping (address => uint256) public candidates_votes;
-    address[] candidates;
-    //mapping (address => address) votes;
-    address[] voters;
+    address[] private candidates;
+    address[] private voters;
 
-    uint256 index;
-    address public proxy;
-    uint256 constant public MAX_VALIDATORS = 5;
-    uint256 constant public MAX_VOTES = 3;
+    uint256 private index;
+    address private proxy;
+    uint256 constant private MAX_VALIDATORS = 5;
+    uint256 constant private MAX_VOTES = 3;
 
     constructor(address _proxy, address _initValidator) {
         addValidator(_initValidator);
@@ -31,7 +30,7 @@ contract RepuContract{
     //modifiers
 
     modifier hasCorrectProxyAddress(address _new){
-        (bool success,bytes memory data) = _new.call(abi.encodeWithSignature('getProxyAddress()'));
+        (bool success,bytes memory data) = _new.call(abi.encodeWithSignature('getProxy()'));
         (address new_proxy, bool b) = abi.decode(data,(address, bool));
         require(proxy == new_proxy, "Proxy address is not correct");
         _;
@@ -53,25 +52,25 @@ contract RepuContract{
     }
 
     //https://stackoverflow.com/a/64661901
-    function quickSort(uint256[] memory reputations, address[] memory sortedValidators, uint left, uint right) internal view {
+    function quickSort(uint256[] memory arr1, address[] memory arr2, uint left, uint right) internal view {
         uint i = left;
         uint j = right;
         if (i == j) return;
-        uint256 pivot = reputations[left + (right - left) / 2];
+        uint256 pivot = arr1[left + (right - left) / 2];
         while (i <= j) {
-            while (reputations[i] > pivot) i++;
-            while (pivot > reputations[j]) j--;
+            while (arr1[i] > pivot) i++;
+            while (pivot > arr1[j]) j--;
             if (i <= j) {
-                (reputations[i], reputations[j]) = (reputations[j], reputations[i]);
-                (sortedValidators[i], sortedValidators[j]) = (sortedValidators[j], sortedValidators[i]);
+                (arr1[i], arr1[j]) = (arr1[j], arr1[i]);
+                (arr2[i], arr2[j]) = (arr2[j], arr2[i]);
                 i++;
                 j--;
             }
         }
         if (left < j)
-            quickSort(reputations, sortedValidators, left, j);
+            quickSort(arr1, arr2, left, j);
         if (i < right)
-            quickSort(reputations, sortedValidators, i, right);
+            quickSort(arr1, arr2, i, right);
     }
 
     function nextValidators() public view returns (address[] memory) {
@@ -108,7 +107,7 @@ contract RepuContract{
     }
 
     function isValidator(address _addr) public view returns (bool){
-        return findAddress(_addr) != validators.length;
+        return findAddress(_addr, validators) != validators.length;
     }
 
     function updateValidators() public {
@@ -116,7 +115,7 @@ contract RepuContract{
     }
 
     function deleteValidator(address _addr) public {
-        uint256 i = findAddress(_addr);
+        uint256 i = findAddress(_addr, validators);
         require(i < validators.length, "Validator not found.");
 
         for (; i < validators.length - 1; i++) {
@@ -128,13 +127,13 @@ contract RepuContract{
         updateReputation();
     }
 
-    function findAddress(address _addr) private view returns (uint256) {
-        for (uint i = 0; i < validators.length; i++) {
-            if (validators[i] == _addr) {
+    function findAddress(address _addr, address[] memory list) private pure returns (uint256) {
+        for (uint i = 0; i < list.length; i++) {
+            if (list[i] == _addr) {
                 return i;
             }
         }
-        return validators.length;
+        return list.length;
     }
 
     function getBlock() public view returns (uint256) {
@@ -157,10 +156,12 @@ contract RepuContract{
     //votation methods
 
     function voteValidator(address _addr) external{
-        //check not duplicated votes
+        //check number of block (initVoting)
         //ponderar voto
+
+        require(!hasAlreadyVoted(msg.sender), "Vote already registered.");
+
         voters.push(msg.sender);
-        //votes[msg.sender] = _addr;
         if(candidates_votes[_addr] == 0) {
             candidates.push(_addr);
         }
@@ -179,6 +180,10 @@ contract RepuContract{
             addValidator(sortedCandidates[i]);
         }
         updateReputation();
+    }
+
+    function hasAlreadyVoted(address _addr) public view returns (bool){
+        return findAddress(_addr, voters) != voters.length;
     }
 
     function getSortedCandidates() internal view returns (address[] memory) {
@@ -204,7 +209,7 @@ contract RepuContract{
 
     //proxy methods
 
-    function getProxyAddress() public view returns (address, bool) {
+    function getProxy() public view returns (address, bool) {
         return (proxy, true);
     }
 
