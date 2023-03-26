@@ -6,16 +6,24 @@ pragma solidity >=0.7.0 <0.9.0;
 
 contract RepuContract{
 
-    mapping (address => uint256) validators_reputation;
+    mapping (address => uint256) public validators_reputation;
     address[] validators;
+
+    mapping (address => uint256) public candidates_votes;
+    address[] candidates;
+    //mapping (address => address) votes;
+    address[] voters;
+
     uint256 index;
     address public proxy;
     uint256 constant public MAX_VALIDATORS = 5;
+    uint256 constant public MAX_VOTES = 3;
 
     constructor(address _proxy, address _initValidator) {
         addValidator(_initValidator);
         addValidator(0x2eD64d60E50f820B240EB5905B0a73848B2506d6);
         addValidator(0x11F8EBFF1B0fFb4dE7814Cc25430D01149fcDC71);
+        updateReputation();
         index = 0;
         proxy = _proxy;
     }
@@ -84,12 +92,15 @@ contract RepuContract{
         return list;
     }
 
-    function addValidator(address _addr) public {
+    function addValidator(address _addr) private {
         require(validators.length < MAX_VALIDATORS, "No more validators accepted.");
-
-        validators.push(_addr);
-        validators_reputation[_addr] = 0;
-        updateReputation();
+        if(!isValidator(_addr)){
+            if(validators.length == MAX_VALIDATORS){
+                validators.pop();
+            }
+            validators.push(_addr);
+            validators_reputation[_addr] = 0;
+        }
     }
 
     function getValidators() public view returns (address[] memory) {
@@ -126,13 +137,69 @@ contract RepuContract{
         return validators.length;
     }
 
+    function getBlock() public view returns (uint256) {
+        return block.number;
+    }
+
     //reputation methods
 
-    function updateReputation() internal{
+    function updateReputation() private{
         for(uint256 i = 0; i < validators.length; i++){
-            validators_reputation[validators[i]] = validators[i].balance;
+            validators_reputation[validators[i]] = calculateReputation(validators[i]);
         }
         validators = getSortedValidators();
+    }
+
+    function calculateReputation(address _addr) private view  returns (uint256){
+        return _addr.balance;
+    }
+
+    //votation methods
+
+    function voteValidator(address _addr) external{
+        //check not duplicated votes
+        //ponderar voto
+        voters.push(msg.sender);
+        //votes[msg.sender] = _addr;
+        if(candidates_votes[_addr] == 0) {
+            candidates.push(_addr);
+        }
+        candidates_votes[_addr]++;
+
+        if(voters.length >= MAX_VOTES){
+            finishVoting();
+        }
+    }
+
+    function finishVoting() private {
+        address[] memory sortedCandidates = getSortedCandidates();
+        delete candidates;
+        delete voters;
+        for (uint i = 0; i < sortedCandidates.length && i < MAX_VALIDATORS; i++){
+            addValidator(sortedCandidates[i]);
+        }
+        updateReputation();
+    }
+
+    function getSortedCandidates() internal view returns (address[] memory) {
+        uint256[] memory votes = new uint256[](candidates.length);
+        address[] memory sortedCandidates = new address[](candidates.length);
+
+        for (uint256 i = 0; i < candidates.length; i++) {
+            votes[i] = candidates_votes[candidates[i]];
+            sortedCandidates[i] = candidates[i];
+        }
+
+        quickSort(votes, sortedCandidates, 0, (sortedCandidates.length - 1));
+        return sortedCandidates;
+    }
+
+    function getVoters() public view returns (address[] memory) {
+        return voters;
+    }
+
+    function getCandidates() public view returns (address[] memory) {
+        return candidates;
     }
 
     //proxy methods
