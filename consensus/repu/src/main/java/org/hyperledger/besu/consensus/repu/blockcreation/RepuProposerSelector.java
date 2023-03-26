@@ -14,11 +14,10 @@
  */
 package org.hyperledger.besu.consensus.repu.blockcreation;
 
-import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.repu.RepuHelpers;
+import org.hyperledger.besu.consensus.repu.contracts.RepuContract;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Responsible for determining which member of the validator pool should create the next block.
@@ -28,13 +27,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class RepuProposerSelector {
 
-  private final ValidatorProvider validatorProvider;
-
-  public RepuProposerSelector(final ValidatorProvider validatorProvider) {
-    checkNotNull(validatorProvider);
-    this.validatorProvider = validatorProvider;
-  }
-
   /**
    * Determines which validator should create the block after that supplied.
    *
@@ -43,7 +35,7 @@ public class RepuProposerSelector {
    */
   public Address selectProposerForNextBlock(final BlockHeader parentHeader) {
     if(RepuHelpers.repuContract == null){
-      return Address.fromHexString(RepuHelpers.INITIAL_NODE_ADDRESS);
+      return Address.fromHexString(RepuContract.INITIAL_VALIDATOR);
     }
     else{
       return Address.fromHexString(RepuHelpers.validations.get(String.valueOf(parentHeader.getNumber() + 1)));

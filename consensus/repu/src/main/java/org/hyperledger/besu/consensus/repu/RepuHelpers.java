@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.repu;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.repu.blockcreation.RepuProposerSelector;
 import org.hyperledger.besu.consensus.repu.contracts.ProxyContract;
-import org.hyperledger.besu.consensus.repu.contracts.TestRepuContract;
+import org.hyperledger.besu.consensus.repu.contracts.RepuContract;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -42,15 +42,14 @@ public class RepuHelpers {
     private static Web3j web3j;
     private static NodeKey nodeKey;
     private static ProxyContract proxyContract;
-    public static TestRepuContract repuContract;
+    public static RepuContract repuContract;
     private static boolean contractDeployed = false;
     private static boolean contractDeploying = false;
     private static final Logger LOG = LoggerFactory.getLogger(RepuHelpers.class);
-    public static final String INITIAL_NODE_ADDRESS = "0x1c21335d5e5d3f675d7eb7e19e943535555bb291";
     public static Map<String, String> validations = Stream.of(new String[][]{
-            {"1", INITIAL_NODE_ADDRESS},
-            {"2", INITIAL_NODE_ADDRESS},
-            {"3", INITIAL_NODE_ADDRESS},
+            {"1", RepuContract.INITIAL_VALIDATOR},
+            {"2", RepuContract.INITIAL_VALIDATOR},
+            {"3", RepuContract.INITIAL_VALIDATOR},
     }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
     public static Address getProposerOfBlock(final BlockHeader header) {
@@ -60,25 +59,25 @@ public class RepuHelpers {
 
     static Address getProposerForBlockAfter(
             final BlockHeader parent, final ValidatorProvider validatorProvider) {
-        final RepuProposerSelector proposerSelector = new RepuProposerSelector(validatorProvider);
+        final RepuProposerSelector proposerSelector = new RepuProposerSelector();
         return proposerSelector.selectProposerForNextBlock(parent);
     }
 
     static boolean isSigner(final Address candidate) {
-        List<String> validators;
         try {
-            validators = repuContract.getValidators();
+            return repuContract != null
+                    ? repuContract.isValidator(String.valueOf(candidate))
+                    : candidate.toString().equals(RepuContract.INITIAL_VALIDATOR);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return validators.contains(candidate.toString());
     }
 
     public static List<Address> getValidators() {
         final List<Address> validators = new ArrayList<>();
 
         if (RepuHelpers.repuContract == null) {
-            validators.add(Address.fromHexString(RepuHelpers.INITIAL_NODE_ADDRESS));
+            validators.add(Address.fromHexString(RepuContract.INITIAL_VALIDATOR));
         } else {
             try {
                 validators.addAll(RepuHelpers.repuContract.getValidators().stream().map(Address::fromHexString).collect(Collectors.toList()));
@@ -91,6 +90,11 @@ public class RepuHelpers {
     }
 
     public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
+
+        if (!isSigner(candidate)) {
+            return false;
+        }
+
         while (!validations.containsKey(String.valueOf(parent.getNumber() + 1))) {
             updateList(parent);
         }
@@ -115,7 +119,7 @@ public class RepuHelpers {
 
                     proxyContract = new ProxyContract(web3j, getCredentials(),
                             new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
-                    repuContract =new TestRepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(),
+                    repuContract =new RepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(),
                             new StaticGasProvider(GAS_PRICE, GAS_LIMIT), proxyContract);
 
                     validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
@@ -137,7 +141,7 @@ public class RepuHelpers {
 
         proxyContract = ProxyContract.deploy(web3j, getCredentials(),
                 new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
-        repuContract = TestRepuContract.deploy(web3j, getCredentials(),
+        repuContract = RepuContract.deploy(web3j, getCredentials(),
                 new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
         repuContract.setProxyContract(proxyContract);
 
@@ -157,7 +161,7 @@ public class RepuHelpers {
 
     public static void updateValidator() throws Exception {
         if (repuContract != null) {
-            repuContract.updateValidator();
+            repuContract.updateValidators();
         }
     }
 

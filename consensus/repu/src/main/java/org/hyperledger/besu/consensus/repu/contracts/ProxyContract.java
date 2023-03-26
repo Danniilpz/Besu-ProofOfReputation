@@ -74,7 +74,7 @@ public class ProxyContract extends Contract {
                 credentials,
                 contractGasProvider,
                 BINARY,
-                FunctionEncoder.encodeConstructor(Collections.singletonList(new Address(TestRepuContract.INITIAL_ADDRESS))));
+                FunctionEncoder.encodeConstructor(Collections.singletonList(new Address(RepuContract.INITIAL_ADDRESS))));
     }
 
     public String getConsensusAddress() throws Exception { return this.getConsensusAddressCall().send(); }
