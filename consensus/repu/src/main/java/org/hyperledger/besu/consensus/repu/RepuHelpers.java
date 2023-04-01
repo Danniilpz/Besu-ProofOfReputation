@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.repu;
 
+import io.netty.util.internal.StringUtil;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.repu.blockcreation.RepuProposerSelector;
 import org.hyperledger.besu.consensus.repu.contracts.ProxyContract;
@@ -27,7 +28,12 @@ import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.tx.gas.StaticGasProvider;
+import java.io.File;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,12 +45,14 @@ public class RepuHelpers {
 
     private static final BigInteger GAS_PRICE = new BigInteger("500000");
     private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
+    private static final String VOTE_FILE = "ValidatorVote";
     private static Web3j web3j;
     private static NodeKey nodeKey;
     private static ProxyContract proxyContract;
     public static RepuContract repuContract;
     private static boolean contractDeployed = false;
     private static boolean contractDeploying = false;
+    private static boolean voting = false;
     private static final Logger LOG = LoggerFactory.getLogger(RepuHelpers.class);
     public static Map<String, String> validations = Stream.of(new String[][]{
             {"1", RepuContract.INITIAL_VALIDATOR},
@@ -90,15 +98,21 @@ public class RepuHelpers {
     }
 
     public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-
-        if (!isSigner(candidate)) {
-            return false;
-        }
+        /*try {
+            EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(candidate.toString(), DefaultBlockParameterName.LATEST).send();
+            BigInteger nonce = ethGetTransactionCount.getTransactionCount();
+            LOG.info("Mi nonce es " + nonce);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }*/
 
         while (!validations.containsKey(String.valueOf(parent.getNumber() + 1))) {
             updateList(parent);
         }
 
+        if (!isSigner(candidate)) {
+            return false;
+        }
         //LOG.info(validations.get(String.valueOf(parent.getNumber() + 1)) + " will validate block #" + (parent.getNumber() + 1));
         return Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)));
     }
@@ -119,7 +133,7 @@ public class RepuHelpers {
 
                     proxyContract = new ProxyContract(web3j, getCredentials(),
                             new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
-                    repuContract =new RepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(),
+                    repuContract = new RepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(),
                             new StaticGasProvider(GAS_PRICE, GAS_LIMIT), proxyContract);
 
                     validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
@@ -159,10 +173,31 @@ public class RepuHelpers {
             deployContracts(parent);
     }
 
-    public static void updateValidator() throws Exception {
+    public static void nextTurn() throws Exception {
         if (repuContract != null) {
-            repuContract.updateValidators();
+            repuContract.nextTurn();
         }
+    }
+
+    public static void voteValidator(long block) throws Exception {
+        if (repuContract != null && block == 5 && !voting) {
+            Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
+            String address = readFile(votePath);
+            if (!StringUtil.isNullOrEmpty(address)) repuContract.voteValidator(address);
+            voting = true;
+        } else if (block != 5) {
+            voting = false;
+        }
+    }
+
+    private static String readFile(final Path path) throws IOException {
+        if (path.toFile().exists()) {
+            final List<String> info = Files.readAllLines(path);
+            if (info.size() != 1)
+                throw new IllegalArgumentException("ValidatorVote file has a invalid format.");
+            return info.get(0);
+        }
+        return null;
     }
 
     public static Credentials getCredentials() {

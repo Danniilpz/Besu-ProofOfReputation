@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.1;
+
+import "@openzeppelin/contracts/utils/Address.sol";
 
 //Repu consensus contract
 
@@ -15,13 +17,14 @@ contract RepuContract{
 
     uint256 private index;
     address private proxy;
+    Proxy private p;
     uint256 constant private MAX_VALIDATORS = 5;
-    uint256 constant private MAX_VOTES = 3;
+    uint256 constant private MAX_VOTES = 1;
 
     constructor(address _proxy, address _initValidator) {
         addValidator(_initValidator);
         addValidator(0x2eD64d60E50f820B240EB5905B0a73848B2506d6);
-        addValidator(0x11F8EBFF1B0fFb4dE7814Cc25430D01149fcDC71);
+        //addValidator(0x11F8EBFF1B0fFb4dE7814Cc25430D01149fcDC71);
         updateReputation();
         index = 0;
         proxy = _proxy;
@@ -30,15 +33,24 @@ contract RepuContract{
     //modifiers
 
     modifier hasCorrectProxyAddress(address _new){
-        (bool success,bytes memory data) = _new.call(abi.encodeWithSignature('getProxy()'));
-        (address new_proxy, bool b) = abi.decode(data,(address, bool));
-        require(proxy == new_proxy, "Proxy address is not correct");
+        address new_proxy = RepuContract(_new).getProxy();
+        require(proxy == new_proxy, "Contract proxy address is not correct");
+        _;
+    }
+
+    modifier isContract(address _new){
+        require(Address.isContract(_new), "Address is not a contract");
+        _;
+    }
+
+    modifier hasNotVotedYet(){
+        require(findAddress(msg.sender, voters) == voters.length, "Vote already registered");
         _;
     }
 
     //validator methods
 
-    function getSortedValidators() internal view returns (address[] memory) {
+    function getSortedValidators() private view returns (address[] memory) {
         uint256[] memory reputations = new uint256[](validators.length);
         address[] memory sortedValidators = new address[](validators.length);
 
@@ -110,7 +122,7 @@ contract RepuContract{
         return findAddress(_addr, validators) != validators.length;
     }
 
-    function updateValidators() public {
+    function nextTurn() public {
         index++;
     }
 
@@ -155,11 +167,16 @@ contract RepuContract{
 
     //votation methods
 
-    function voteValidator(address _addr) external{
-        //check number of block (initVoting)
+    function initVoting() private view {
+        //check black list
+        //require(block.number % 5 == 0, "Not in votation time");
+
+    }
+
+    function voteValidator(address _addr) hasNotVotedYet external{
         //ponderar voto
 
-        require(!hasAlreadyVoted(msg.sender), "Vote already registered.");
+        initVoting();
 
         voters.push(msg.sender);
         if(candidates_votes[_addr] == 0) {
@@ -167,23 +184,19 @@ contract RepuContract{
         }
         candidates_votes[_addr]++;
 
-        if(voters.length >= MAX_VOTES){
-            finishVoting();
-        }
+        finishVoting();
     }
 
     function finishVoting() private {
-        address[] memory sortedCandidates = getSortedCandidates();
-        delete candidates;
-        delete voters;
-        for (uint i = 0; i < sortedCandidates.length && i < MAX_VALIDATORS; i++){
-            addValidator(sortedCandidates[i]);
+        if(voters.length >= MAX_VOTES){
+            address[] memory sortedCandidates = getSortedCandidates();
+            delete candidates;
+            delete voters;
+            for (uint i = 0; i < sortedCandidates.length && i < MAX_VALIDATORS; i++){
+                addValidator(sortedCandidates[i]);
+            }
+            updateReputation();
         }
-        updateReputation();
-    }
-
-    function hasAlreadyVoted(address _addr) public view returns (bool){
-        return findAddress(_addr, voters) != voters.length;
     }
 
     function getSortedCandidates() internal view returns (address[] memory) {
@@ -209,12 +222,17 @@ contract RepuContract{
 
     //proxy methods
 
-    function getProxy() public view returns (address, bool) {
-        return (proxy, true);
+    function getProxy() public view returns (address) {
+        return (proxy);
     }
 
-    function updateContractAddress(address _new) hasCorrectProxyAddress(_new) external{
-        (bool success, ) = proxy.call(abi.encodeWithSignature('setConsensusAddress(address)', _new));
-        require(success,"Error");
+    function updateContractAddress(address _new) hasCorrectProxyAddress(_new) isContract(_new) external{
+        Proxy(proxy).setConsensusAddress(_new);
     }
+}
+
+contract Proxy {
+    function getConsensusAddress() public view returns (address){}
+
+    function setConsensusAddress(address _addr) public{}
 }
