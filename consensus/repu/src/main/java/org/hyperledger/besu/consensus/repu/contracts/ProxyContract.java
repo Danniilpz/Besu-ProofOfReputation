@@ -66,7 +66,13 @@ public class ProxyContract extends Contract {
         return executeRemoteCallSingleValueReturn(function, String.class);
     }
 
-    public static RemoteCall<ProxyContract> deploy(
+    public static RemoteCall<ProxyContract>
+
+
+
+
+
+    deploy(
             Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
         return deployRemoteCall(
                 ProxyContract.class,

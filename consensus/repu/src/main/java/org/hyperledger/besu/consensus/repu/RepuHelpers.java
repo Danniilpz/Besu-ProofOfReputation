@@ -27,7 +27,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.tx.gas.StaticGasProvider;
+
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -98,14 +101,6 @@ public class RepuHelpers {
     }
 
     public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-        /*try {
-            EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(candidate.toString(), DefaultBlockParameterName.LATEST).send();
-            BigInteger nonce = ethGetTransactionCount.getTransactionCount();
-            LOG.info("Mi nonce es " + nonce);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }*/
-
         while (!validations.containsKey(String.valueOf(parent.getNumber() + 1))) {
             updateList(parent);
         }
@@ -179,15 +174,19 @@ public class RepuHelpers {
         }
     }
 
-    public static void voteValidator(long block) throws Exception {
-        if (repuContract != null && block == 5 && !voting) {
-            Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
-            String address = readFile(votePath);
-            if (!StringUtil.isNullOrEmpty(address)) repuContract.voteValidator(address);
-            voting = true;
-        } else if (block != 5) {
-            voting = false;
+    public static void voteValidator(long block, String voterAddress) throws Exception {
+        if (repuContract != null) {
+            if (block % 5 == 0 && !voting) {
+                voting = true;
+                Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
+                String address = readFile(votePath);
+                if (!StringUtil.isNullOrEmpty(address)) {
+                    repuContract.voteValidator(address, getNonce(voterAddress));
+                    voting = false;
+                }
+            } else if (block % 5 != 0) voting = false;
         }
+
     }
 
     private static String readFile(final Path path) throws IOException {
@@ -215,5 +214,15 @@ public class RepuHelpers {
             throw new RuntimeException(e);
         }
         //LOG.info(validations.toString());
+    }
+
+    public static BigInteger getNonce(String address) {
+        try {
+            EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(address, DefaultBlockParameterName.LATEST).send();
+            BigInteger nonce = ethGetTransactionCount.getTransactionCount();
+            return nonce;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

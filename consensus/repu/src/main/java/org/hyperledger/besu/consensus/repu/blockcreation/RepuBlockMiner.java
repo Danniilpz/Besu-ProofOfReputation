@@ -62,15 +62,15 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
             boolean mined = super.mineBlock();
 
-            //RepuHelpers.voteValidator(parentHeader.getNumber() + 1);
-
             RepuHelpers.checkContractsAreDeployed(parentHeader);
 
+            RepuHelpers.voteValidator(parentHeader.getNumber() + 1, localAddress.toString());
             RepuHelpers.nextTurn();
 
             return mined;
         } else {
-            RepuHelpers.voteValidator(parentHeader.getNumber());
+
+            RepuHelpers.voteValidator(parentHeader.getNumber(), localAddress.toString());
             return true; // terminate mining.
         }
     }

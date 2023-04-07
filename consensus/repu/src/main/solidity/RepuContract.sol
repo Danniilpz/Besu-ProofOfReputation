@@ -158,7 +158,7 @@ contract RepuContract{
         for(uint256 i = 0; i < validators.length; i++){
             validators_reputation[validators[i]] = calculateReputation(validators[i]);
         }
-        validators = getSortedValidators();
+        //validators = getSortedValidators();
     }
 
     function calculateReputation(address _addr) private view  returns (uint256){
@@ -169,14 +169,14 @@ contract RepuContract{
 
     function initVoting() private view {
         //check black list
-        //require(block.number % 5 == 0, "Not in votation time");
+        require(block.number % 5 == 0, "Not in votation time");
 
     }
 
-    function voteValidator(address _addr) hasNotVotedYet external{
+    function voteValidator(address _addr) hasNotVotedYet public{
         //ponderar voto
 
-        initVoting();
+        //initVoting();
 
         voters.push(msg.sender);
         if(candidates_votes[_addr] == 0) {
@@ -194,6 +194,7 @@ contract RepuContract{
             delete voters;
             for (uint i = 0; i < sortedCandidates.length && i < MAX_VALIDATORS; i++){
                 addValidator(sortedCandidates[i]);
+                candidates_votes[sortedCandidates[i]] = 0;
             }
             updateReputation();
         }
