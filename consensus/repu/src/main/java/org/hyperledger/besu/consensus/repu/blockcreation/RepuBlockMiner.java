@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
+
 import java.util.function.Function;
 
 public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
@@ -53,6 +54,8 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
     @Override
     protected boolean mineBlock() throws Exception {
+
+
         //LOG.info("trying to mine");
         if (RepuHelpers.addressIsAllowedToProduceNextBlock(
                 localAddress, protocolContext, parentHeader)) {
@@ -61,14 +64,15 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
             RepuHelpers.checkContractsAreDeployed(parentHeader);
 
-            RepuHelpers.updateValidator(parentHeader.getNumber() + 1);
-
-            RepuHelpers.validatorIndex = 0;
+            RepuHelpers.voteValidator(parentHeader.getNumber() + 1, localAddress.toString());
+            RepuHelpers.nextTurn();
 
             return mined;
-        }
+        } else {
 
-        return true; // terminate mining.
+            RepuHelpers.voteValidator(parentHeader.getNumber(), localAddress.toString());
+            return true; // terminate mining.
+        }
     }
 
 

@@ -49,17 +49,28 @@ contract TestRepuContract {
         validators.push(_addr);
     }
 
-    function updateValidators(uint256 lastBlock) public {
+    function getProxyAddress() public view returns (address, bool) {
+        return (proxy, true);
+    }
+
+    function updateValidators(uint256 _lastBlock) public {
         index++;
-        lastBlock = _block;
+        lastBlock = _lastBlock;
     }
 
     //function deleteValidator(address _addr) public {
     //    validator = _addr;
     //}
 
-    function updateContractAddress(address _new) external{
-        (bool success,bytes memory data) = proxy.call(abi.encodeWithSignature('setConsensusAddress(address)', _new));
+    modifier hasCorrectProxyAddress(address _new){
+        (bool success,bytes memory data) = _new.call(abi.encodeWithSignature('getProxyAddress()'));
+        (address new_proxy, bool b) = abi.decode(data,(address, bool));
+        require(proxy == new_proxy, "Proxy address is not correct");
+        _;
+    }
+
+    function updateContractAddress(address _new) hasCorrectProxyAddress(_new) external{
+        (bool success, ) = proxy.call(abi.encodeWithSignature('setConsensusAddress(address)', _new));
         require(success,"Error");
     }
 }

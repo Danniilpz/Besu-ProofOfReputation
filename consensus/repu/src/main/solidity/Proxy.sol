@@ -9,7 +9,7 @@ contract Proxy {
     }
 
     modifier isAllowed{
-        require(msg.sender == consensusAddress, "You are not autorized");
+        require(msg.sender == consensusAddress, "You are not authorized");
         _;
     }
 

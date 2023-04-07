@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.repu.RepuExtraData;
 import org.hyperledger.besu.consensus.repu.RepuHelpers;
+import org.hyperledger.besu.consensus.repu.contracts.RepuContract;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -109,7 +110,7 @@ public class RepuMinerExecutor extends AbstractMinerExecutor<RepuBlockMiner> {
         if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {
 
             if (RepuHelpers.repuContract == null) {
-                validators.add(Address.fromHexString(RepuHelpers.INITIAL_NODE_ADDRESS));
+                validators.add(Address.fromHexString(RepuContract.INITIAL_VALIDATOR));
             } else {
                 validators.addAll(RepuHelpers.getValidators());
             }

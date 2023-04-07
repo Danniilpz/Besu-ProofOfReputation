@@ -14,20 +14,13 @@
  */
 package org.hyperledger.besu.consensus.repu.blockcreation;
 
-import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.junit.Before;
 import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class RepuProposerSelectorTest {
 
@@ -37,13 +30,6 @@ public class RepuProposerSelectorTest {
           AddressHelpers.ofValue(2),
           AddressHelpers.ofValue(3),
           AddressHelpers.ofValue(4));
-  private ValidatorProvider validatorProvider;
-
-  @Before
-  public void setup() {
-    validatorProvider = mock(ValidatorProvider.class);
-    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
-  }
 
   @Test
   public void proposerForABlockIsBasedOnModBlockNumber() {
@@ -51,7 +37,7 @@ public class RepuProposerSelectorTest {
 
     for (int prevBlockNumber = 0; prevBlockNumber < 10; prevBlockNumber++) {
       headerBuilderFixture.number(prevBlockNumber);
-      final RepuProposerSelector selector = new RepuProposerSelector(validatorProvider);
+      final RepuProposerSelector selector = new RepuProposerSelector();
       final Address nextProposer =
           selector.selectProposerForNextBlock(headerBuilderFixture.buildHeader());
       assertThat(nextProposer)

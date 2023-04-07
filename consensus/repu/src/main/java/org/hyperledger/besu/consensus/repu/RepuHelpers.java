@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.consensus.repu;
 
+import io.netty.util.internal.StringUtil;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.repu.blockcreation.RepuProposerSelector;
 import org.hyperledger.besu.consensus.repu.contracts.ProxyContract;
-import org.hyperledger.besu.consensus.repu.contracts.TestRepuContract;
+import org.hyperledger.besu.consensus.repu.contracts.RepuContract;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -26,8 +27,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.tx.gas.StaticGasProvider;
+
+import java.io.File;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,19 +48,20 @@ public class RepuHelpers {
 
     private static final BigInteger GAS_PRICE = new BigInteger("500000");
     private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
+    private static final String VOTE_FILE = "ValidatorVote";
     private static Web3j web3j;
     private static NodeKey nodeKey;
     private static ProxyContract proxyContract;
-    public static TestRepuContract repuContract;
+    public static RepuContract repuContract;
     private static boolean contractDeployed = false;
     private static boolean contractDeploying = false;
+    private static boolean voting = false;
     private static final Logger LOG = LoggerFactory.getLogger(RepuHelpers.class);
     public static final String INITIAL_NODE_ADDRESS = "0x1c21335d5e5d3f675d7eb7e19e943535555bb291";
-    public static int validatorIndex = 0;
     public static Map<String, String> validations = Stream.of(new String[][]{
-            {"1", INITIAL_NODE_ADDRESS},
-            {"2", INITIAL_NODE_ADDRESS},
-            {"3", INITIAL_NODE_ADDRESS},
+            {"1", RepuContract.INITIAL_VALIDATOR},
+            {"2", RepuContract.INITIAL_VALIDATOR},
+            {"3", RepuContract.INITIAL_VALIDATOR},
     }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
     public static Address getProposerOfBlock(final BlockHeader header) {
@@ -61,25 +71,25 @@ public class RepuHelpers {
 
     static Address getProposerForBlockAfter(
             final BlockHeader parent, final ValidatorProvider validatorProvider) {
-        final RepuProposerSelector proposerSelector = new RepuProposerSelector(validatorProvider);
+        final RepuProposerSelector proposerSelector = new RepuProposerSelector();
         return proposerSelector.selectProposerForNextBlock(parent);
     }
 
     static boolean isSigner(final Address candidate) {
-        List<String> validators;
         try {
-            validators = repuContract.getValidators();
+            return repuContract != null
+                    ? repuContract.isValidator(String.valueOf(candidate))
+                    : candidate.toString().equals(RepuContract.INITIAL_VALIDATOR);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return validators.contains(candidate.toString());
     }
 
     public static List<Address> getValidators() {
         final List<Address> validators = new ArrayList<>();
 
         if (RepuHelpers.repuContract == null) {
-            validators.add(Address.fromHexString(RepuHelpers.INITIAL_NODE_ADDRESS));
+            validators.add(Address.fromHexString(RepuContract.INITIAL_VALIDATOR));
         } else {
             try {
                 validators.addAll(RepuHelpers.repuContract.getValidators().stream().map(Address::fromHexString).collect(Collectors.toList()));
@@ -96,6 +106,13 @@ public class RepuHelpers {
             updateList(parent);
         }
 
+        if (!isSigner(candidate)) {
+            return false;
+        }
+        //LOG.info(validations.get(String.valueOf(parent.getNumber() + 1)) + " will validate block #" + (parent.getNumber() + 1));
+        return Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)));
+
+        /*
         boolean isAllowed = Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)));
 
         if(!isAllowed && repuContract != null){
@@ -116,6 +133,7 @@ public class RepuHelpers {
         }
         //LOG.info(validations.get(String.valueOf(parent.getNumber() + 1)) + " will validate block #" + (parent.getNumber() + 1));
         return isAllowed;
+         */
     }
 
     public static void setNodeKey(NodeKey nodeKey) {
@@ -134,7 +152,7 @@ public class RepuHelpers {
 
                     proxyContract = new ProxyContract(web3j, getCredentials(),
                             new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
-                    repuContract =new TestRepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(),
+                    repuContract = new RepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(),
                             new StaticGasProvider(GAS_PRICE, GAS_LIMIT), proxyContract);
 
                     validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
@@ -156,7 +174,7 @@ public class RepuHelpers {
 
         proxyContract = ProxyContract.deploy(web3j, getCredentials(),
                 new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
-        repuContract = TestRepuContract.deploy(web3j, getCredentials(),
+        repuContract = RepuContract.deploy(web3j, getCredentials(),
                 new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
         repuContract.setProxyContract(proxyContract);
 
@@ -174,10 +192,35 @@ public class RepuHelpers {
             deployContracts(parent);
     }
 
-    public static void updateValidator(long block) throws Exception {
+    public static void nextTurn() throws Exception {
         if (repuContract != null) {
-            repuContract.updateValidators(new BigInteger(String.valueOf(block)));
+            repuContract.nextTurn();
         }
+    }
+
+    public static void voteValidator(long block, String voterAddress) throws Exception {
+        if (repuContract != null) {
+            if (block % 5 == 0 && !voting) {
+                voting = true;
+                Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
+                String address = readFile(votePath);
+                if (!StringUtil.isNullOrEmpty(address)) {
+                    repuContract.voteValidator(address, getNonce(voterAddress));
+                    voting = false;
+                }
+            } else if (block % 5 != 0) voting = false;
+        }
+
+    }
+
+    private static String readFile(final Path path) throws IOException {
+        if (path.toFile().exists()) {
+            final List<String> info = Files.readAllLines(path);
+            if (info.size() != 1)
+                throw new IllegalArgumentException("ValidatorVote file has a invalid format.");
+            return info.get(0);
+        }
+        return null;
     }
 
     public static Credentials getCredentials() {
@@ -188,8 +231,7 @@ public class RepuHelpers {
     public static void updateList(BlockHeader parentHeader) {
         try {
             if (repuContract != null) {
-                List<String> nextValidators = repuContract.nextValidators();
-                validations.put(String.valueOf(parentHeader.getNumber() + 1), nextValidators.get(validatorIndex % nextValidators.size()));
+                validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
                 //LOG.info("Next validator: " + nextValidator);
             }
         } catch (Exception e) {
@@ -198,5 +240,13 @@ public class RepuHelpers {
         //LOG.info(validations.toString());
     }
 
-
+    public static BigInteger getNonce(String address) {
+        try {
+            EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(address, DefaultBlockParameterName.LATEST).send();
+            BigInteger nonce = ethGetTransactionCount.getTransactionCount();
+            return nonce;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
