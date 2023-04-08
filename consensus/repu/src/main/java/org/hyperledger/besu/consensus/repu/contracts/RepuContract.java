@@ -55,6 +55,7 @@ public class RepuContract extends Contract {
   public static final String FUNC_GETVALIDATORS = "getValidators";
   public static final String FUNC_VOTEVALIDATOR = "voteValidator";
   public static final String FUNC_NEXTTURN = "nextTurn";
+  public static final String FUNC_GETBLOCK = "getBlock";
   public static String INITIAL_ADDRESS = "0xb624d87403ac9f170ea9678a07051adc6fd7dc16";
   public static String INITIAL_VALIDATOR = "0x1c21335d5e5d3f675d7eb7e19e943535555bb291";
   private ProxyContract proxyContract;
@@ -136,6 +137,15 @@ public class RepuContract extends Contract {
     return executeRemoteCallTransaction(function);
   }
 
+  private RemoteFunctionCall<BigInteger> getBlockCall() {
+    final org.web3j.abi.datatypes.Function function =
+            new org.web3j.abi.datatypes.Function(
+                    FUNC_GETBLOCK,
+                    Collections.emptyList(),
+                    Collections.singletonList(new TypeReference<Uint256>() {}));
+    return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+  }
+
   public static RemoteCall<RepuContract> deploy(
           Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
@@ -170,6 +180,10 @@ public class RepuContract extends Contract {
   public void voteValidator(String address, BigInteger nonce) throws Exception { this.voteValidatorCall(address, nonce).send(); }
 
   public void nextTurn() throws Exception { this.nextTurnCall().send(); }
+
+  public long getBlock() throws Exception { return this.getBlockCall().send().longValue(); }
+
+
 
 
 }

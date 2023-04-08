@@ -102,38 +102,44 @@ public class RepuHelpers {
     }
 
     public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-        while (!validations.containsKey(String.valueOf(parent.getNumber() + 1))) {
-            updateList(parent);
-        }
+        try{
+            /*if(repuContract != null) {
+                LOG.info("last block was mined by: " + RepuHelpers.getProposerOfBlock(parent));
+                LOG.info("current: " + repuContract.getBlock() + " trying to mine: " + (parent.getNumber()+1));
+            }*/
+            if(repuContract != null && repuContract.getBlock() > parent.getNumber()) return false;
 
-        if (!isSigner(candidate)) {
+            while (!validations.containsKey(String.valueOf(parent.getNumber() + 1))) {
+                updateList(parent);
+            }
+
+            if (!isSigner(candidate)) return false;
+
+            if (Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)))) {
+                return true;
+            } else {
+                List<String> nextValidators = repuContract.nextValidators();
+                long lastTimestamp = parent.getTimestamp() * 1000;
+                int i = 0;
+                while(true) {
+                    if(System.currentTimeMillis() - lastTimestamp >= 30000){
+                        i++;
+                        if(candidate.toString().equals(nextValidators.get(i % nextValidators.size()))){
+                            validations.put(String.valueOf(parent.getNumber() + 1), candidate.toString());
+                            return true;
+                        }
+                    }
+                    else if (repuContract.getBlock() > parent.getNumber()) break;
+                }
+                return false;
+            }
+        } catch (Exception e){
+            e.printStackTrace();
             return false;
         }
-        //LOG.info(validations.get(String.valueOf(parent.getNumber() + 1)) + " will validate block #" + (parent.getNumber() + 1));
-        return Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)));
 
-        /*
-        boolean isAllowed = Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)));
 
-        if(!isAllowed && repuContract != null){
-            long startTime = System.currentTimeMillis();
-            try {
-                while(repuContract.getLastBlock() != (parent.getNumber() + 1)
-                        && ((System.currentTimeMillis() - startTime) < 20000)){}
-
-                if(repuContract.getLastBlock() != (parent.getNumber() + 1)){
-                    validatorIndex++;
-                    updateList(parent);
-                    isAllowed = Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)));
-                }
-
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        //LOG.info(validations.get(String.valueOf(parent.getNumber() + 1)) + " will validate block #" + (parent.getNumber() + 1));
-        return isAllowed;
-         */
+        //LOG.info("Timestamp: " + " Current time: " + System.currentTimeMillis());
     }
 
     public static void setNodeKey(NodeKey nodeKey) {
