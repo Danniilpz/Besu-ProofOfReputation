@@ -103,10 +103,11 @@ public class RepuHelpers {
 
     public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
         try{
-            /*if(repuContract != null) {
-                LOG.info("last block was mined by: " + RepuHelpers.getProposerOfBlock(parent));
-                LOG.info("current: " + repuContract.getBlock() + " trying to mine: " + (parent.getNumber()+1));
-            }*/
+            if(repuContract != null) {
+                //LOG.info("last block was mined by: " + RepuHelpers.getProposerOfBlock(parent));
+                //LOG.info("current: " + repuContract.getBlock() + " trying to mine: " + (parent.getNumber()+1));
+                //LOG.info(repuContract.getContractAddress());
+            }
             if(repuContract != null && repuContract.getBlock() > parent.getNumber()) return false;
 
             while (!validations.containsKey(String.valueOf(parent.getNumber() + 1))) {

@@ -18,7 +18,6 @@ import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.repu.headervalidationrules.CoinbaseHeaderValidationRule;
-import org.hyperledger.besu.consensus.repu.headervalidationrules.RepuDifficultyValidationRule;
 import org.hyperledger.besu.consensus.repu.headervalidationrules.RepuExtraDataValidationRule;
 import org.hyperledger.besu.consensus.repu.headervalidationrules.SignerRateLimitValidationRule;
 import org.hyperledger.besu.consensus.repu.headervalidationrules.VoteValidationRule;
@@ -79,7 +78,7 @@ public class BlockHeaderValidationRulesetFactory {
                 new ConstantFieldValidationRule<>(
                     "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
             .addRule(new RepuExtraDataValidationRule(epochManager))
-            .addRule(new RepuDifficultyValidationRule())
+            //.addRule(new RepuDifficultyValidationRule())
             .addRule(new SignerRateLimitValidationRule())
             .addRule(new CoinbaseHeaderValidationRule(epochManager))
             .addRule(new GasUsageValidationRule());
