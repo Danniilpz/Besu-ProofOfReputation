@@ -22,7 +22,7 @@ contract RepuContract{
     Proxy private p;
     uint256 constant private MAX_VALIDATORS = 2;
     uint256 constant private MAX_VOTES = 4;
-    uint256 private balanceWeight = 10000;
+    uint256 private balanceWeight = 10;
     uint256 private nonceWeight = 1;
     address private owner;
 
@@ -75,7 +75,7 @@ contract RepuContract{
             sortedValidators[i] = validators[i];
         }
 
-        quickSort(reputations, sortedValidators, 0, (sortedValidators.length - 1));
+        //quickSort(reputations, sortedValidators, 0, (sortedValidators.length - 1));
         return sortedValidators;
     }
 
@@ -125,16 +125,18 @@ contract RepuContract{
     }
 
     function addValidators(address[] memory _addresses) private {
-        if(_addresses.length >= MAX_VALIDATORS){
+        if(_addresses.length >= MAX_VALIDATORS) {
             delete validators;
         }
         else{
-            for (uint i = 0; i < _addresses.length; i++){
-                if(isValidator(_addresses[i])){
-                    deleteValidator(_addresses[i]);
-                }
-                else{
-                    validators.pop();
+            for (uint i = 0; i < _addresses.length; i++) {
+                if(nodes_nonces[_addresses[i]] > 0) {
+                    if(isValidator(_addresses[i])) {
+                        deleteValidator(_addresses[i]);
+                    }
+                    else if (validators.length + i == MAX_VALIDATORS) {
+                        validators.pop();
+                    }
                 }
             }
         }
@@ -154,11 +156,17 @@ contract RepuContract{
     }
 
     function nextTurn() public {
-        if((getBlock() - 2) % 5 == 0) {
+        index++;
+        if((getBlock() - 1) % 5 == 0) {
             finishVoting();
         }
+    }
 
-        index++;
+    function nextTurnAndVote(address _addr, uint256 _nonce) public{
+        nextTurn();
+        if(getBlock() % 5 == 0){
+            voteValidator(_addr, _nonce);
+        }
     }
 
     function deleteValidator(address _addr) public {
@@ -210,14 +218,14 @@ contract RepuContract{
 
     function initVoting() private view {
         //check black list
-        require((block.number - 1) % 5 == 0, "Not in votation time");
+        require(block.number % 5 == 0, "Not in votation time");
 
     }
 
     function voteValidator(address _addr, uint256 nonce) notVotedYet notVoteHimself(_addr) public{
         //ponderar voto
 
-        initVoting();
+        //initVoting();
 
         //if(nodes_nonces[msg.sender] > nonce) //black list
         nodes_nonces[msg.sender] = nonce;
@@ -226,11 +234,7 @@ contract RepuContract{
         if(candidates_votes[_addr] == 0) {
             candidates.push(_addr);
         }
-        candidates_votes[_addr]++;
-
-        /*if(voters.length >= MAX_VOTES){
-            finishVoting();
-        }*/
+        candidates_votes[_addr] += calculateReputation(msg.sender);
     }
 
     function finishVoting() private {

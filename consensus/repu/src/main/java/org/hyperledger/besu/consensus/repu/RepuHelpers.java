@@ -199,15 +199,31 @@ public class RepuHelpers {
             deployContracts(parent);
     }
 
-    public static void nextTurn() throws Exception {
+    public static void nextTurnAndVote(long block, String voterAddress) throws Exception {
         if (repuContract != null) {
-            repuContract.nextTurn();
+            if ((block + 1) % 5 == 0 && !voting) {
+                voting = true;
+                Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
+                String address = readFile(votePath);
+                if (!StringUtil.isNullOrEmpty(address)) {
+                    repuContract.nextTurnAndVote(address, getNonce(voterAddress));
+                    voting = false;
+                }
+                else {
+                    voting = false;
+                    repuContract.nextTurn();
+
+                }
+            } else if ((block + 1) % 5 != 0){
+                voting = false;
+                repuContract.nextTurn();
+            }
         }
     }
 
     public static void voteValidator(long block, String voterAddress) throws Exception {
         if (repuContract != null) {
-            if (block % 5 == 0 && !voting) {
+            if ((block + 1) % 5 == 0 && !voting) {
                 voting = true;
                 Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
                 String address = readFile(votePath);
@@ -215,7 +231,7 @@ public class RepuHelpers {
                     repuContract.voteValidator(address, getNonce(voterAddress));
                     voting = false;
                 }
-            } else if (block % 5 != 0) voting = false;
+            } else if ((block + 1) % 5 != 0) voting = false;
         }
 
     }
