@@ -102,16 +102,12 @@ public class RepuHelpers {
     }
 
     public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-        try{
-            if(repuContract != null) {
-                //LOG.info("last block was mined by: " + RepuHelpers.getProposerOfBlock(parent));
-                //LOG.info("current: " + repuContract.getBlock() + " trying to mine: " + (parent.getNumber()+1));
-                //LOG.info(repuContract.getContractAddress());
-            }
-            if(repuContract != null && repuContract.getBlock() > parent.getNumber()) return false;
+        try {
+            if (repuContract != null && repuContract.getBlock() > parent.getNumber()) return false;
 
             while (!validations.containsKey(String.valueOf(parent.getNumber() + 1))) {
                 updateList(parent);
+                Thread.sleep(100);
             }
 
             if (!isSigner(candidate)) return false;
@@ -122,19 +118,22 @@ public class RepuHelpers {
                 List<String> nextValidators = repuContract.nextValidators();
                 long lastTimestamp = parent.getTimestamp() * 1000;
                 int i = 0;
-                while(true) {
-                    if(System.currentTimeMillis() - lastTimestamp >= 30000){
+                while (true) {
+                    if (System.currentTimeMillis() - lastTimestamp >= 30000) {
                         i++;
-                        if(candidate.toString().equals(nextValidators.get(i % nextValidators.size()))){
+                        if (candidate.toString().equals(nextValidators.get(i % nextValidators.size()))) {
                             validations.put(String.valueOf(parent.getNumber() + 1), candidate.toString());
                             return true;
                         }
+                    } else if (repuContract.getBlock() > parent.getNumber()) {
+                        break;
+                    } else {
+                        Thread.sleep(1000);
                     }
-                    else if (repuContract.getBlock() > parent.getNumber()) break;
                 }
                 return false;
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
@@ -208,13 +207,12 @@ public class RepuHelpers {
                 if (!StringUtil.isNullOrEmpty(address)) {
                     repuContract.nextTurnAndVote(address, getNonce(voterAddress));
                     voting = false;
-                }
-                else {
+                } else {
                     voting = false;
                     repuContract.nextTurn();
 
                 }
-            } else if ((block + 1) % 5 != 0){
+            } else if ((block + 1) % 5 != 0) {
                 voting = false;
                 repuContract.nextTurn();
             }

@@ -68,11 +68,10 @@ contract RepuContract{
 
     function getSortedValidators() private view returns (address[] memory) {
         uint256[] memory reputations = new uint256[](validators.length);
-        address[] memory sortedValidators = new address[](validators.length);
+        address[] memory sortedValidators = validators;
 
         for (uint256 i = 0; i < validators.length; i++) {
             reputations[i] = validators_reputation[validators[i]];
-            sortedValidators[i] = validators[i];
         }
 
         //quickSort(reputations, sortedValidators, 0, (sortedValidators.length - 1));
@@ -80,7 +79,7 @@ contract RepuContract{
     }
 
     //https://stackoverflow.com/a/64661901
-    function quickSort(uint256[] memory arr1, address[] memory arr2, uint left, uint right) internal view {
+    function quickSort(uint256[] memory arr1, address[] memory arr2, uint left, uint right) internal pure {
         uint i = left;
         uint j = right;
         if (i == j) return;
@@ -222,9 +221,8 @@ contract RepuContract{
 
     }
 
-    function voteValidator(address _addr, uint256 nonce) notVotedYet notVoteHimself(_addr) public{
-        //ponderar voto
-
+    //function voteValidator(address _addr, uint256 nonce) notVotedYet notVoteHimself(_addr) public{
+    function voteValidator(address _addr, uint256 nonce) public{
         //initVoting();
 
         //if(nodes_nonces[msg.sender] > nonce) //black list
@@ -234,7 +232,8 @@ contract RepuContract{
         if(candidates_votes[_addr] == 0) {
             candidates.push(_addr);
         }
-        candidates_votes[_addr] += calculateReputation(msg.sender);
+        //candidates_votes[_addr] += calculateReputation(msg.sender);
+        candidates_votes[_addr]++;
     }
 
     function finishVoting() private {
