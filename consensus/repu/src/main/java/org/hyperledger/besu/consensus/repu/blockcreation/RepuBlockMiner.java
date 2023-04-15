@@ -23,12 +23,16 @@ import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
 
 import java.util.function.Function;
 
 public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
+    private static final Logger LOG = LoggerFactory.getLogger(RepuBlockMiner.class);
     private final Address localAddress;
 
     public RepuBlockMiner(
@@ -50,21 +54,27 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
     @Override
     protected boolean mineBlock() throws Exception {
-        if (RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, parentHeader)) {
+        try{
+            if (RepuHelpers.addressIsAllowedToProduceNextBlock(
+                    localAddress, parentHeader)) {
 
-            boolean mined = super.mineBlock();
+                boolean mined = super.mineBlock();
 
-            RepuHelpers.checkContractsAreDeployed(parentHeader);
+                RepuHelpers.checkContractsAreDeployed(parentHeader);
 
-            RepuHelpers.nextTurnAndVote(parentHeader.getNumber() + 1, localAddress.toString());
+                RepuHelpers.nextTurnAndVote(parentHeader.getNumber() + 1, localAddress.toString());
 
-            return mined;
-        } else {
+                return mined;
+            } else {
 
-            RepuHelpers.voteValidator(parentHeader.getNumber(), localAddress.toString());
-            return true; // terminate mining.
+                RepuHelpers.voteValidator(parentHeader.getNumber(), localAddress.toString());
+                return true; // terminate mining.
+            }
+        } catch (InterruptedException | TransactionException e) {
+            LOG.error("Execution has been interrupted");
+            return false;
         }
+
     }
 
 

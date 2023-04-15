@@ -14,6 +14,7 @@ contract RepuContract{
     mapping (address => uint256) public candidates_votes;
     address[] private candidates;
     address[] private voters;
+    address finishVotingValidator;
 
     mapping (address => uint256) public nodes_nonces;
     address[] private blackList;
@@ -44,8 +45,8 @@ contract RepuContract{
         _;
     }
 
-    modifier isAValidator {
-        require(isValidator(msg.sender));
+    modifier isAllowed {
+        require(isValidator(msg.sender) || msg.sender == finishVotingValidator);
         _;
     }
 
@@ -94,10 +95,32 @@ contract RepuContract{
         return sortedValidators;
     }
 
+    //https://stackoverflow.com/a/64661901
+    function quickSort(uint256[] memory arr1, address[] memory arr2, uint left, uint right) internal pure {
+        uint i = left;
+        uint j = right;
+        if (i == j) return;
+        uint256 pivot = arr1[left + (right - left) / 2];
+        while (i <= j) {
+            while (arr1[i] > pivot) i++;
+            while (pivot > arr1[j]) j--;
+            if (i <= j) {
+                (arr1[i], arr1[j]) = (arr1[j], arr1[i]);
+                (arr2[i], arr2[j]) = (arr2[j], arr2[i]);
+                i++;
+                j--;
+            }
+        }
+        if (left < j)
+            quickSort(arr1, arr2, left, j);
+        if (i < right)
+            quickSort(arr1, arr2, i, right);
+    }
+
     function bubbleSort(uint256[] memory arr1, address[] memory arr2) public pure {
         uint len = arr1.length;
-        uint temp1;
-        uint temp2;
+        uint256 temp1;
+        address temp2;
         for (uint i = 0; i < len-1; i++) {
             for (uint j = 0; j < len-i-1; j++) {
                 if (arr1[j] > arr1[j+1]) {
@@ -166,7 +189,7 @@ contract RepuContract{
         return findAddress(_addr, validators) != validators.length;
     }
 
-    function nextTurn() public {
+    function nextTurn() isAllowed public {
         index++;
         if((getBlock() - 1) % 5 == 0) {
             finishVoting();
@@ -258,6 +281,7 @@ contract RepuContract{
     }
 
     function finishVoting() private {
+        finishVotingValidator = msg.sender;
         address[] memory sortedCandidates = getSortedCandidates();
         delete candidates;
         for(uint i = 0; i < voters.length; i++) {
