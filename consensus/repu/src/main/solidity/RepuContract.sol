@@ -28,7 +28,7 @@ contract RepuContract{
 
     constructor(address _proxy, address _initValidator) {
         addValidator(_initValidator);
-        addValidator(0x2eD64d60E50f820B240EB5905B0a73848B2506d6);
+        //addValidator(0x2eD64d60E50f820B240EB5905B0a73848B2506d6);
         //addValidator(0x11F8EBFF1B0fFb4dE7814Cc25430D01149fcDC71);
         updateReputation();
         index = 0;
@@ -40,6 +40,11 @@ contract RepuContract{
 
     modifier isOwner {
         require(msg.sender == owner);
+        _;
+    }
+
+    modifier isAValidator {
+        require(isValidator(msg.sender));
         _;
     }
 
@@ -68,11 +73,10 @@ contract RepuContract{
 
     function getSortedValidators() private view returns (address[] memory) {
         uint256[] memory reputations = new uint256[](validators.length);
-        address[] memory sortedValidators = new address[](validators.length);
+        address[] memory sortedValidators = validators;
 
         for (uint256 i = 0; i < validators.length; i++) {
             reputations[i] = validators_reputation[validators[i]];
-            sortedValidators[i] = validators[i];
         }
 
         //quickSort(reputations, sortedValidators, 0, (sortedValidators.length - 1));
@@ -80,7 +84,7 @@ contract RepuContract{
     }
 
     //https://stackoverflow.com/a/64661901
-    function quickSort(uint256[] memory arr1, address[] memory arr2, uint left, uint right) internal view {
+    function quickSort(uint256[] memory arr1, address[] memory arr2, uint left, uint right) internal pure {
         uint i = left;
         uint j = right;
         if (i == j) return;
@@ -125,25 +129,27 @@ contract RepuContract{
     }
 
     function addValidators(address[] memory _addresses) private {
-        if(_addresses.length >= MAX_VALIDATORS) {
+        /*if(_addresses.length >= MAX_VALIDATORS) {
             delete validators;
-        }
-        else{
-            for (uint i = 0; i < _addresses.length; i++) {
-                if(nodes_nonces[_addresses[i]] > 0) {
-                    if(isValidator(_addresses[i])) {
-                        deleteValidator(_addresses[i]);
-                    }
-                    else if (validators.length + i == MAX_VALIDATORS) {
-                        validators.pop();
-                    }
+        }*/
+        uint256 acceptedValidators = 0;
+        for (uint i = 0; i < _addresses.length && acceptedValidators < MAX_VALIDATORS; i++) {
+            if(nodes_nonces[_addresses[i]] > 0) {
+                if(isValidator(_addresses[i])) {
+                    deleteFromValidators(_addresses[i]);
                 }
+                else if (validators.length + i == MAX_VALIDATORS) {
+                    validators.pop();
+                }
+                acceptedValidators++;
             }
         }
 
         for (uint i = 0; i < _addresses.length && i < MAX_VALIDATORS; i++){
-            addValidator(_addresses[i]);
-            candidates_votes[_addresses[i]] = 0;
+            if(nodes_nonces[_addresses[i]] > 0) {
+                addValidator(_addresses[i]);
+                candidates_votes[_addresses[i]] = 0;
+            }
         }
     }
 
@@ -155,7 +161,7 @@ contract RepuContract{
         return findAddress(_addr, validators) != validators.length;
     }
 
-    function nextTurn() public {
+    function nextTurn() isAValidator public {
         index++;
         if((getBlock() - 1) % 5 == 0) {
             finishVoting();
@@ -169,7 +175,7 @@ contract RepuContract{
         }
     }
 
-    function deleteValidator(address _addr) public {
+    function deleteFromValidators(address _addr) private {
         uint256 i = findAddress(_addr, validators);
         require(i < validators.length, "Validator not found.");
 
@@ -177,6 +183,10 @@ contract RepuContract{
 
         validators.pop();
         delete validators_reputation[_addr];
+    }
+
+    function deleteValidator(address _addr) isOwner public {
+        deleteFromValidators(_addr);
         updateReputation();
     }
 
@@ -223,9 +233,7 @@ contract RepuContract{
     }
 
     function voteValidator(address _addr, uint256 nonce) notVotedYet notVoteHimself(_addr) public{
-        //ponderar voto
-
-        //initVoting();
+        initVoting();
 
         //if(nodes_nonces[msg.sender] > nonce) //black list
         nodes_nonces[msg.sender] = nonce;
@@ -240,6 +248,9 @@ contract RepuContract{
     function finishVoting() private {
         address[] memory sortedCandidates = getSortedCandidates();
         delete candidates;
+        for(uint i = 0; i < voters.length; i++) {
+            candidates_votes[voters[i]] = 0;
+        }
         delete voters;
 
         addValidators(sortedCandidates);

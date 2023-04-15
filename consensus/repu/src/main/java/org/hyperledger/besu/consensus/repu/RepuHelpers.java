@@ -57,7 +57,6 @@ public class RepuHelpers {
     private static boolean contractDeploying = false;
     private static boolean voting = false;
     private static final Logger LOG = LoggerFactory.getLogger(RepuHelpers.class);
-    public static final String INITIAL_NODE_ADDRESS = "0x1c21335d5e5d3f675d7eb7e19e943535555bb291";
     public static Map<String, String> validations = Stream.of(new String[][]{
             {"1", RepuContract.INITIAL_VALIDATOR},
             {"2", RepuContract.INITIAL_VALIDATOR},
@@ -88,11 +87,11 @@ public class RepuHelpers {
     public static List<Address> getValidators() {
         final List<Address> validators = new ArrayList<>();
 
-        if (RepuHelpers.repuContract == null) {
+        if (repuContract == null) {
             validators.add(Address.fromHexString(RepuContract.INITIAL_VALIDATOR));
         } else {
             try {
-                validators.addAll(RepuHelpers.repuContract.getValidators().stream().map(Address::fromHexString).collect(Collectors.toList()));
+                validators.addAll(repuContract.getValidators().stream().map(Address::fromHexString).collect(Collectors.toList()));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -102,16 +101,12 @@ public class RepuHelpers {
     }
 
     public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-        try{
-            if(repuContract != null) {
-                //LOG.info("last block was mined by: " + RepuHelpers.getProposerOfBlock(parent));
-                //LOG.info("current: " + repuContract.getBlock() + " trying to mine: " + (parent.getNumber()+1));
-                //LOG.info(repuContract.getContractAddress());
-            }
-            if(repuContract != null && repuContract.getBlock() > parent.getNumber()) return false;
+        try {
+            if (repuContract != null && repuContract.getBlock() > parent.getNumber()) return false;
 
             while (!validations.containsKey(String.valueOf(parent.getNumber() + 1))) {
                 updateList(parent);
+                Thread.sleep(100);
             }
 
             if (!isSigner(candidate)) return false;
@@ -119,22 +114,25 @@ public class RepuHelpers {
             if (Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)))) {
                 return true;
             } else {
-                List<String> nextValidators = repuContract.nextValidators();
+                /*List<String> nextValidators = repuContract.nextValidators();
                 long lastTimestamp = parent.getTimestamp() * 1000;
                 int i = 0;
-                while(true) {
-                    if(System.currentTimeMillis() - lastTimestamp >= 30000){
+                while (true) {
+                    if (System.currentTimeMillis() - lastTimestamp >= 30000) {
                         i++;
-                        if(candidate.toString().equals(nextValidators.get(i % nextValidators.size()))){
+                        if (candidate.toString().equals(nextValidators.get(i % nextValidators.size()))) {
                             validations.put(String.valueOf(parent.getNumber() + 1), candidate.toString());
                             return true;
                         }
+                    } else if (repuContract.getBlock() > parent.getNumber()) {
+                        break;
+                    } else {
+                        Thread.sleep(1000);
                     }
-                    else if (repuContract.getBlock() > parent.getNumber()) break;
-                }
+                }*/
                 return false;
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
@@ -208,13 +206,12 @@ public class RepuHelpers {
                 if (!StringUtil.isNullOrEmpty(address)) {
                     repuContract.nextTurnAndVote(address, getNonce(voterAddress));
                     voting = false;
-                }
-                else {
+                } else {
                     voting = false;
                     repuContract.nextTurn();
 
                 }
-            } else if ((block + 1) % 5 != 0){
+            } else if ((block + 1) % 5 != 0) {
                 voting = false;
                 repuContract.nextTurn();
             }
@@ -267,7 +264,7 @@ public class RepuHelpers {
         try {
             EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(address, DefaultBlockParameterName.LATEST).send();
             BigInteger nonce = ethGetTransactionCount.getTransactionCount();
-            return nonce;
+            return nonce.add(new BigInteger("1"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
