@@ -15,13 +15,11 @@
 package org.hyperledger.besu.consensus.repu;
 
 import io.netty.util.internal.StringUtil;
-import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.repu.blockcreation.RepuProposerSelector;
 import org.hyperledger.besu.consensus.repu.contracts.ProxyContract;
 import org.hyperledger.besu.consensus.repu.contracts.RepuContract;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;

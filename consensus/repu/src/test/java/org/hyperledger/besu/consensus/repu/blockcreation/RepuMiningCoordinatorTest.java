@@ -87,7 +87,7 @@ public class RepuMiningCoordinatorTest {
     when(minerExecutor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(blockMiner));
     when(syncState.isInSync()).thenReturn(true);
 
-    miningTracker = new RepuMiningTracker(proposerAddress, protocolContext);
+    miningTracker = new RepuMiningTracker(proposerAddress);
   }
 
   @Test

@@ -90,7 +90,6 @@ public class RepuGetSignersAtHashTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void failsWhenNoParam() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -104,7 +103,6 @@ public class RepuGetSignersAtHashTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void returnsValidatorsForBlockHash() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

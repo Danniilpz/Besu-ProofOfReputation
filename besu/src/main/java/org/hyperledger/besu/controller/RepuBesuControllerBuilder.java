@@ -95,7 +95,7 @@ public class RepuBesuControllerBuilder extends BesuControllerBuilder {
             protocolContext.getBlockchain(),
             miningExecutor,
             syncState,
-            new RepuMiningTracker(localAddress, protocolContext));
+            new RepuMiningTracker(localAddress));
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
 
     // Repu mining is implicitly enabled.

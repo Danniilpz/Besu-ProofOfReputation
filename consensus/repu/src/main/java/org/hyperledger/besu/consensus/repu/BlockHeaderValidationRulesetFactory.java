@@ -84,9 +84,7 @@ public class BlockHeaderValidationRulesetFactory {
             .addRule(new CoinbaseHeaderValidationRule(epochManager))
             .addRule(new GasUsageValidationRule());
 
-    if (baseFeeMarket.isPresent()) {
-      builder.addRule(new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket.get()));
-    }
+    baseFeeMarket.ifPresent(feeMarket -> builder.addRule(new BaseFeeMarketBlockHeaderGasPriceValidationRule(feeMarket)));
 
     var mixHashRule =
         new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO);

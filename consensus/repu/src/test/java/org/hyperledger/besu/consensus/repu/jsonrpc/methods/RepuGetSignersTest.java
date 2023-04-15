@@ -78,7 +78,6 @@ public class RepuGetSignersTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void returnsValidatorsWhenNoParam() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "repu_getSigners", new Object[] {}));
@@ -93,7 +92,6 @@ public class RepuGetSignersTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void returnsValidatorsForBlockNumber() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

@@ -15,18 +15,14 @@
 package org.hyperledger.besu.consensus.repu;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class RepuMiningTracker {
 
   private final Address localAddress;
-  private final ProtocolContext protocolContext;
 
-  public RepuMiningTracker(final Address localAddress, final ProtocolContext protocolContext) {
-    this.localAddress = localAddress;
-    this.protocolContext = protocolContext;
-  }
+  public RepuMiningTracker(final Address localAddress) {
+    this.localAddress = localAddress;  }
 
   public boolean isProposerAfter(final BlockHeader header) {
     final Address nextProposer =
