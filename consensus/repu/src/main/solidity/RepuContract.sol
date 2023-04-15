@@ -2,21 +2,21 @@
 
 pragma solidity ^0.8.1;
 
-import "@openzeppelin/contracts/utils/Address.sol";
+import "openzeppelin.sol";
 
 //Repu consensus contract
 
-contract RepuContract{
+contract RepuContract {
 
-    mapping (address => uint256) public validators_reputation;
+    mapping(address => uint256) public validators_reputation;
     address[] private validators;
 
-    mapping (address => uint256) public candidates_votes;
+    mapping(address => uint256) public candidates_votes;
     address[] private candidates;
     address[] private voters;
     address finishVotingValidator;
 
-    mapping (address => uint256) public nodes_nonces;
+    mapping(address => uint256) public nodes_nonces;
     address[] private blackList;
 
     uint256 private index;
@@ -30,8 +30,6 @@ contract RepuContract{
 
     constructor(address _proxy, address _initValidator) {
         addValidator(_initValidator);
-        //addValidator(0x2eD64d60E50f820B240EB5905B0a73848B2506d6);
-        //addValidator(0x11F8EBFF1B0fFb4dE7814Cc25430D01149fcDC71);
         updateReputation();
         index = 0;
         proxy = _proxy;
@@ -95,41 +93,19 @@ contract RepuContract{
         return sortedValidators;
     }
 
-    //https://stackoverflow.com/a/64661901
-    function quickSort(uint256[] memory arr1, address[] memory arr2, uint left, uint right) internal pure {
-        uint i = left;
-        uint j = right;
-        if (i == j) return;
-        uint256 pivot = arr1[left + (right - left) / 2];
-        while (i <= j) {
-            while (arr1[i] > pivot) i++;
-            while (pivot > arr1[j]) j--;
-            if (i <= j) {
-                (arr1[i], arr1[j]) = (arr1[j], arr1[i]);
-                (arr2[i], arr2[j]) = (arr2[j], arr2[i]);
-                i++;
-                j--;
-            }
-        }
-        if (left < j)
-            quickSort(arr1, arr2, left, j);
-        if (i < right)
-            quickSort(arr1, arr2, i, right);
-    }
-
     function bubbleSort(uint256[] memory arr1, address[] memory arr2) public pure {
         uint len = arr1.length;
         uint256 temp1;
         address temp2;
-        for (uint i = 0; i < len-1; i++) {
-            for (uint j = 0; j < len-i-1; j++) {
-                if (arr1[j] > arr1[j+1]) {
+        for (uint i = 0; i < len - 1; i++) {
+            for (uint j = 0; j < len - i - 1; j++) {
+                if (arr1[j] > arr1[j + 1]) {
                     temp1 = arr1[j];
                     temp2 = arr2[j];
-                    arr1[j] = arr1[j+1];
-                    arr2[j] = arr2[j+1];
-                    arr1[j+1] = temp1;
-                    arr2[j+1] = temp2;
+                    arr1[j] = arr1[j + 1];
+                    arr2[j] = arr2[j + 1];
+                    arr1[j + 1] = temp1;
+                    arr2[j + 1] = temp2;
                 }
             }
         }
@@ -139,13 +115,13 @@ contract RepuContract{
         uint256 i = index % validators.length;
         uint256 j = 0;
         address[] memory list = new address[](validators.length);
-        while(i < validators.length){
+        while (i < validators.length) {
             list[j] = validators[i];
             i++;
             j++;
         }
         i = 0;
-        while(i < index % validators.length){
+        while (i < index % validators.length) {
             list[j] = validators[i];
             i++;
             j++;
@@ -162,8 +138,8 @@ contract RepuContract{
         uint256 acceptedValidators = 0;
         for (uint i = 0; i < _addresses.length && acceptedValidators < MAX_VALIDATORS; i++) {
             //has voted and not in the black list
-            if(nodes_nonces[_addresses[i]] > 0 && findAddress(_addresses[i], blackList) == blackList.length) {
-                if(isValidator(_addresses[i])) {
+            if (nodes_nonces[_addresses[i]] > 0 && findAddress(_addresses[i], blackList) == blackList.length) {
+                if (isValidator(_addresses[i])) {
                     deleteFromValidators(_addresses[i]);
                 }
                 else if (validators.length + i == MAX_VALIDATORS) {
@@ -173,8 +149,8 @@ contract RepuContract{
             }
         }
 
-        for (uint i = 0; i < _addresses.length && i < MAX_VALIDATORS; i++){
-            if(nodes_nonces[_addresses[i]] > 0) {
+        for (uint i = 0; i < _addresses.length && i < MAX_VALIDATORS; i++) {
+            if (nodes_nonces[_addresses[i]] > 0) {
                 addValidator(_addresses[i]);
                 candidates_votes[_addresses[i]] = 0;
             }
@@ -191,15 +167,15 @@ contract RepuContract{
 
     function nextTurn() isAllowed public {
         index++;
-        if((getBlock() - 1) % 5 == 0) {
+        if ((getBlock() - 1) % 5 == 0) {
             finishVoting();
             index++;
         }
     }
 
-    function nextTurnAndVote(address _addr, uint256 _nonce) public{
+    function nextTurnAndVote(address _addr, uint256 _nonce) public {
         nextTurn();
-        if(getBlock() % 5 == 0){
+        if (getBlock() % 5 == 0) {
             voteValidator(_addr, _nonce);
         }
     }
@@ -234,7 +210,7 @@ contract RepuContract{
 
     function addToBlackList(address _addr) private {
         blackList.push(_addr);
-        if(isValidator(_addr)){
+        if (isValidator(_addr)) {
             deleteFromValidators(_addr);
         }
     }
@@ -245,15 +221,15 @@ contract RepuContract{
 
     //reputation methods
 
-    function updateReputation() private{
-        for(uint256 i = 0; i < validators.length; i++){
+    function updateReputation() private {
+        for (uint256 i = 0; i < validators.length; i++) {
             validators_reputation[validators[i]] = calculateReputation(validators[i]);
         }
         validators = getSortedValidators();
     }
 
-    function calculateReputation(address _addr) private view  returns (uint256) {
-        return ((_addr.balance / (10**18)) / balanceWeight) + (nodes_nonces[_addr] / nonceWeight);
+    function calculateReputation(address _addr) private view returns (uint256) {
+        return ((_addr.balance / (10 ** 18)) / balanceWeight) + (nodes_nonces[_addr] / nonceWeight);
     }
 
     function setBalanceWeight(uint256 _newBalanceWeight) isOwner external {
@@ -266,14 +242,14 @@ contract RepuContract{
 
     //votation methods
 
-    function voteValidator(address _addr, uint256 nonce) timeToVote notVotedYet notVoteHimself(_addr) notInBlackList(_addr) public{
-        if(nodes_nonces[msg.sender] >= nonce) {
+    function voteValidator(address _addr, uint256 nonce) timeToVote notVotedYet notVoteHimself(_addr) notInBlackList(_addr) public {
+        if (nodes_nonces[msg.sender] >= nonce) {
             addToBlackList(_addr);
         } else {
             nodes_nonces[msg.sender] = nonce;
 
             voters.push(msg.sender);
-            if(candidates_votes[_addr] == 0) {
+            if (candidates_votes[_addr] == 0) {
                 candidates.push(_addr);
             }
             candidates_votes[_addr] += calculateReputation(msg.sender);
@@ -284,7 +260,7 @@ contract RepuContract{
         finishVotingValidator = msg.sender;
         address[] memory sortedCandidates = getSortedCandidates();
         delete candidates;
-        for(uint i = 0; i < voters.length; i++) {
+        for (uint i = 0; i < voters.length; i++) {
             candidates_votes[voters[i]] = 0;
         }
         delete voters;
@@ -321,7 +297,7 @@ contract RepuContract{
         return (proxy);
     }
 
-    function updateContractAddress(address _new) hasCorrectProxyAddress(_new) isContract(_new) external{
+    function updateContractAddress(address _new) hasCorrectProxyAddress(_new) isContract(_new) external {
         Proxy(proxy).setConsensusAddress(_new);
     }
 }
@@ -329,5 +305,5 @@ contract RepuContract{
 contract Proxy {
     function getConsensusAddress() public view returns (address){}
 
-    function setConsensusAddress(address _addr) public{}
+    function setConsensusAddress(address _addr) public {}
 }
