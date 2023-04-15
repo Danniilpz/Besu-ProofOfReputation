@@ -26,7 +26,6 @@ import org.hyperledger.besu.util.Subscribers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
 
 import java.util.function.Function;
@@ -55,25 +54,20 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
     @Override
     protected boolean mineBlock() throws Exception {
-        try {
-            if (RepuHelpers.addressIsAllowedToProduceNextBlock(
-                    localAddress, protocolContext, parentHeader)) {
+        if (RepuHelpers.addressIsAllowedToProduceNextBlock(
+                localAddress, protocolContext, parentHeader)) {
 
-                boolean mined = super.mineBlock();
+            boolean mined = super.mineBlock();
 
-                RepuHelpers.checkContractsAreDeployed(parentHeader);
+            RepuHelpers.checkContractsAreDeployed(parentHeader);
 
-                RepuHelpers.nextTurnAndVote(parentHeader.getNumber() + 1, localAddress.toString());
+            RepuHelpers.nextTurnAndVote(parentHeader.getNumber() + 1, localAddress.toString());
 
-                return mined;
-            } else {
+            return mined;
+        } else {
 
-                RepuHelpers.voteValidator(parentHeader.getNumber(), localAddress.toString());
-                return true; // terminate mining.
-            }
-        } catch (InterruptedException | TransactionException e) {
-            LOG.error("Execution has been interrupted");
-            return false;
+            RepuHelpers.voteValidator(parentHeader.getNumber(), localAddress.toString());
+            return true; // terminate mining.
         }
     }
 

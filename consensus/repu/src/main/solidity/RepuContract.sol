@@ -16,6 +16,7 @@ contract RepuContract{
     address[] private voters;
 
     mapping (address => uint256) public nodes_nonces;
+    address[] private blackList;
 
     uint256 private index;
     address private proxy;
@@ -48,24 +49,34 @@ contract RepuContract{
         _;
     }
 
-    modifier hasCorrectProxyAddress(address _new){
+    modifier hasCorrectProxyAddress(address _new) {
         address new_proxy = RepuContract(_new).getProxy();
         require(proxy == new_proxy, "Contract proxy address is not correct");
         _;
     }
 
-    modifier isContract(address _new){
+    modifier isContract(address _new) {
         require(Address.isContract(_new), "Address is not a contract");
         _;
     }
 
-    modifier notVotedYet(){
+    modifier notVotedYet() {
         require(findAddress(msg.sender, voters) == voters.length, "Vote already registered");
         _;
     }
 
     modifier notVoteHimself(address _addr){
         require(msg.sender != _addr, "A node can not vote himself");
+        _;
+    }
+
+    modifier timeToVote() {
+        require(block.number % 5 == 0, "Not in votation time");
+        _;
+    }
+
+    modifier notInBlackList(address _addr) {
+        require(findAddress(_addr, blackList) == blackList.length, "Address in the black list");
         _;
     }
 
@@ -129,12 +140,10 @@ contract RepuContract{
     }
 
     function addValidators(address[] memory _addresses) private {
-        /*if(_addresses.length >= MAX_VALIDATORS) {
-            delete validators;
-        }*/
         uint256 acceptedValidators = 0;
         for (uint i = 0; i < _addresses.length && acceptedValidators < MAX_VALIDATORS; i++) {
-            if(nodes_nonces[_addresses[i]] > 0) {
+            //has voted and not in the black list
+            if(nodes_nonces[_addresses[i]] > 0 && findAddress(_addresses[i], blackList) == blackList.length) {
                 if(isValidator(_addresses[i])) {
                     deleteFromValidators(_addresses[i]);
                 }
@@ -161,10 +170,11 @@ contract RepuContract{
         return findAddress(_addr, validators) != validators.length;
     }
 
-    function nextTurn() isAValidator public {
+    function nextTurn() public {
         index++;
         if((getBlock() - 1) % 5 == 0) {
             finishVoting();
+            index++;
         }
     }
 
@@ -199,6 +209,17 @@ contract RepuContract{
         return list.length;
     }
 
+    function getBlackList() public view returns (address[] memory) {
+        return blackList;
+    }
+
+    function addToBlackList(address _addr) private {
+        blackList.push(_addr);
+        if(isValidator(_addr)){
+            deleteFromValidators(_addr);
+        }
+    }
+
     function getBlock() public view returns (uint256) {
         return block.number;
     }
@@ -226,23 +247,18 @@ contract RepuContract{
 
     //votation methods
 
-    function initVoting() private view {
-        //check black list
-        require(block.number % 5 == 0, "Not in votation time");
+    function voteValidator(address _addr, uint256 nonce) timeToVote notVotedYet notVoteHimself(_addr) notInBlackList(_addr) public{
+        if(nodes_nonces[msg.sender] >= nonce) {
+            addToBlackList(_addr);
+        } else {
+            nodes_nonces[msg.sender] = nonce;
 
-    }
-
-    function voteValidator(address _addr, uint256 nonce) notVotedYet notVoteHimself(_addr) public{
-        initVoting();
-
-        //if(nodes_nonces[msg.sender] > nonce) //black list
-        nodes_nonces[msg.sender] = nonce;
-
-        voters.push(msg.sender);
-        if(candidates_votes[_addr] == 0) {
-            candidates.push(_addr);
+            voters.push(msg.sender);
+            if(candidates_votes[_addr] == 0) {
+                candidates.push(_addr);
+            }
+            candidates_votes[_addr] += calculateReputation(msg.sender);
         }
-        candidates_votes[_addr] += calculateReputation(msg.sender);
     }
 
     function finishVoting() private {
