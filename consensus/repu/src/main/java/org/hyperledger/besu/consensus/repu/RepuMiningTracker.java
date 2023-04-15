@@ -30,9 +30,7 @@ public class RepuMiningTracker {
 
   public boolean isProposerAfter(final BlockHeader header) {
     final Address nextProposer =
-        RepuHelpers.getProposerForBlockAfter(
-            header,
-            protocolContext.getConsensusContext(RepuContext.class).getValidatorProvider());
+        RepuHelpers.getProposerForBlockAfter(header);
     return localAddress.equals(nextProposer);
   }
 
@@ -41,7 +39,7 @@ public class RepuMiningTracker {
   }
 
   public boolean canMakeBlockNextRound(final BlockHeader header) {
-    return RepuHelpers.addressIsAllowedToProduceNextBlock(localAddress, protocolContext, header);
+    return RepuHelpers.addressIsAllowedToProduceNextBlock(localAddress, header);
   }
 
   public boolean blockCreatedLocally(final BlockHeader header) {

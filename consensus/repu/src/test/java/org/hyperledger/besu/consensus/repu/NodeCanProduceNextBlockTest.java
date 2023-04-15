@@ -81,7 +81,7 @@ public class NodeCanProduceNextBlockTest {
 
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, repuProtocolContext, block_1.getHeader()))
+                localAddress, block_1.getHeader()))
         .isTrue();
   }
 
@@ -109,12 +109,12 @@ public class NodeCanProduceNextBlockTest {
 
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, repuProtocolContext, block_1.getHeader()))
+                localAddress, block_1.getHeader()))
         .isFalse();
 
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, repuProtocolContext, block_2.getHeader()))
+                localAddress, block_2.getHeader()))
         .isTrue();
   }
 
@@ -175,15 +175,15 @@ public class NodeCanProduceNextBlockTest {
 
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, repuProtocolContext, block_1.getHeader()))
+                localAddress, block_1.getHeader()))
         .isFalse();
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, repuProtocolContext, block_2.getHeader()))
+                localAddress, block_2.getHeader()))
         .isTrue();
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, repuProtocolContext, block_3.getHeader()))
+                localAddress, block_3.getHeader()))
         .isTrue();
   }
 
@@ -211,11 +211,11 @@ public class NodeCanProduceNextBlockTest {
 
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, repuProtocolContext, genesisBlock.getHeader()))
+                localAddress, genesisBlock.getHeader()))
         .isTrue();
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, repuProtocolContext, block_1.getHeader()))
+                localAddress, block_1.getHeader()))
         .isTrue();
   }
 
@@ -240,7 +240,7 @@ public class NodeCanProduceNextBlockTest {
     assertThatThrownBy(
             () ->
                 RepuHelpers.addressIsAllowedToProduceNextBlock(
-                    localAddress, repuProtocolContext, parentHeader))
+                    localAddress, parentHeader))
         .isInstanceOf(RuntimeException.class)
         .hasMessage("The block was on a orphaned chain.");
   }
@@ -260,7 +260,7 @@ public class NodeCanProduceNextBlockTest {
     final BlockHeader parentHeader = headerBuilder.buildHeader();
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                AddressHelpers.ofValue(1), repuProtocolContext, parentHeader))
+                AddressHelpers.ofValue(1), parentHeader))
         .isFalse();
   }
 }

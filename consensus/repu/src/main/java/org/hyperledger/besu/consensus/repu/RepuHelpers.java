@@ -23,14 +23,11 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.tx.gas.StaticGasProvider;
-
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -56,7 +53,6 @@ public class RepuHelpers {
     private static boolean contractDeployed = false;
     private static boolean contractDeploying = false;
     private static boolean voting = false;
-    private static final Logger LOG = LoggerFactory.getLogger(RepuHelpers.class);
     public static Map<String, String> validations = Stream.of(new String[][]{
             {"1", RepuContract.INITIAL_VALIDATOR},
             {"2", RepuContract.INITIAL_VALIDATOR},
@@ -68,8 +64,7 @@ public class RepuHelpers {
         return extraData.getProposerAddress();
     }
 
-    static Address getProposerForBlockAfter(
-            final BlockHeader parent, final ValidatorProvider validatorProvider) {
+    static Address getProposerForBlockAfter(final BlockHeader parent) {
         final RepuProposerSelector proposerSelector = new RepuProposerSelector();
         return proposerSelector.selectProposerForNextBlock(parent);
     }
@@ -100,7 +95,7 @@ public class RepuHelpers {
         return validators;
     }
 
-    public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
+    public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final BlockHeader parent) {
         try {
             if (repuContract != null && repuContract.getBlock() > parent.getNumber()) return false;
 
@@ -141,15 +136,15 @@ public class RepuHelpers {
         //LOG.info("Timestamp: " + " Current time: " + System.currentTimeMillis());
     }
 
-    public static void setNodeKey(NodeKey nodeKey) {
+    public static void setNodeKey(final NodeKey nodeKey) {
         RepuHelpers.nodeKey = nodeKey;
     }
 
-    public static void setWeb3j(Web3j web3j) {
+    public static void setWeb3j(final Web3j web3j) {
         RepuHelpers.web3j = web3j;
     }
 
-    public static void getRepuContract(BlockHeader parentHeader) {
+    public static void getRepuContract(final BlockHeader parentHeader) {
         if (repuContract == null) {
             try {
                 if (!contractDeploying && parentHeader.getNumber() > 2) {
@@ -174,7 +169,7 @@ public class RepuHelpers {
         }
     }
 
-    public static void deployContracts(BlockHeader parentHeader) throws Exception {
+    public static void deployContracts(final BlockHeader parentHeader) throws Exception {
         contractDeploying = true;
 
         proxyContract = ProxyContract.deploy(web3j, getCredentials(),
@@ -192,12 +187,12 @@ public class RepuHelpers {
         contractDeploying = false;
     }
 
-    public static void checkContractsAreDeployed(BlockHeader parent) throws Exception {
+    public static void checkContractsAreDeployed(final BlockHeader parent) throws Exception {
         if (!contractDeployed && !contractDeploying)
             deployContracts(parent);
     }
 
-    public static void nextTurnAndVote(long block, String voterAddress) throws Exception {
+    public static void nextTurnAndVote(final long block, final String voterAddress) throws Exception {
         if (repuContract != null) {
             if ((block + 1) % 5 == 0 && !voting) {
                 voting = true;
@@ -218,7 +213,7 @@ public class RepuHelpers {
         }
     }
 
-    public static void voteValidator(long block, String voterAddress) throws Exception {
+    public static void voteValidator(final long block, final String voterAddress) throws Exception {
         if (repuContract != null) {
             if ((block + 1) % 5 == 0 && !voting) {
                 voting = true;
@@ -248,7 +243,7 @@ public class RepuHelpers {
     }
 
 
-    public static void updateList(BlockHeader parentHeader) {
+    public static void updateList(final BlockHeader parentHeader) {
         try {
             if (repuContract != null) {
                 validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
@@ -260,7 +255,7 @@ public class RepuHelpers {
         //LOG.info(validations.toString());
     }
 
-    public static BigInteger getNonce(String address) {
+    public static BigInteger getNonce(final String address) {
         try {
             EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(address, DefaultBlockParameterName.LATEST).send();
             BigInteger nonce = ethGetTransactionCount.getTransactionCount();

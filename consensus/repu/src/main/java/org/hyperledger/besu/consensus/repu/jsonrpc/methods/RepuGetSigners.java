@@ -14,30 +14,17 @@
  */
 package org.hyperledger.besu.consensus.repu.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.repu.RepuHelpers;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class RepuGetSigners implements JsonRpcMethod {
-  private final BlockchainQueries blockchainQueries;
-  private final ValidatorProvider validatorProvider;
-
-  public RepuGetSigners(
-      final BlockchainQueries blockchainQueries, final ValidatorProvider validatorProvider) {
-    this.blockchainQueries = blockchainQueries;
-    this.validatorProvider = validatorProvider;
+  public RepuGetSigners() {
   }
 
   @Override
@@ -49,13 +36,5 @@ public class RepuGetSigners implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(),
                     RepuHelpers.getValidators().stream().map(Objects::toString).collect(Collectors.toList()));
-  }
-
-  private Optional<BlockHeader> determineBlockHeader(final JsonRpcRequestContext request) {
-    final Optional<BlockParameter> blockParameter =
-        request.getOptionalParameter(0, BlockParameter.class);
-    final long latest = blockchainQueries.headBlockNumber();
-    final long blockNumber = blockParameter.map(b -> b.getNumber().orElse(latest)).orElse(latest);
-    return blockchainQueries.blockByNumber(blockNumber).map(BlockWithMetadata::getHeader);
   }
 }

@@ -64,7 +64,7 @@ public class RepuGetSignersAtHashTest {
 
   @Before
   public void setup() {
-    method = new RepuGetSignersAtHash(blockchainQueries, validatorProvider);
+    method = new RepuGetSignersAtHash();
 
     final byte[] genesisBlockExtraData =
         Hex.decode(

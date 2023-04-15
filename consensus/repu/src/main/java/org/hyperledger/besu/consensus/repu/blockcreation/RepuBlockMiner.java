@@ -31,9 +31,7 @@ import org.web3j.protocol.http.HttpService;
 import java.util.function.Function;
 
 public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
-
     private final Address localAddress;
-    private static final Logger LOG = LoggerFactory.getLogger(BlockMiner.class);
 
     public RepuBlockMiner(
             final Function<BlockHeader, RepuBlockCreator> blockCreator,
@@ -55,7 +53,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     @Override
     protected boolean mineBlock() throws Exception {
         if (RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, protocolContext, parentHeader)) {
+                localAddress, parentHeader)) {
 
             boolean mined = super.mineBlock();
 

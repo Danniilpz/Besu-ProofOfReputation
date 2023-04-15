@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.repu.contracts;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Address;
@@ -30,7 +28,6 @@ import org.web3j.protocol.core.RemoteFunctionCall;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 import org.web3j.tx.gas.ContractGasProvider;
-
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
@@ -60,23 +57,22 @@ public class RepuContract extends Contract {
   public static String INITIAL_ADDRESS = "0xb624d87403ac9f170ea9678a07051adc6fd7dc16";
   public static String INITIAL_VALIDATOR = "0x1c21335d5e5d3f675d7eb7e19e943535555bb291";
   private ProxyContract proxyContract;
-  private static final Logger LOG = LoggerFactory.getLogger(RepuContract.class);
 
   public RepuContract(
-          String contractAddress,
-          Web3j web3j,
-          Credentials credentials,
-          ContractGasProvider contractGasProvider,
-          ProxyContract proxyContract) {
+          final String contractAddress,
+          final Web3j web3j,
+          final Credentials credentials,
+          final ContractGasProvider contractGasProvider,
+          final ProxyContract proxyContract) {
     this(contractAddress, web3j, credentials, contractGasProvider);
     this.proxyContract = proxyContract;
   }
 
   public RepuContract(
-          String contractAddress,
-          Web3j web3j,
-          Credentials credentials,
-          ContractGasProvider contractGasProvider) {
+          final String contractAddress,
+          final Web3j web3j,
+          final Credentials credentials,
+          final ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
   }
 
@@ -95,7 +91,7 @@ public class RepuContract extends Contract {
             });
   }
 
-  private RemoteFunctionCall<Boolean> isValidatorCall(String address) {
+  private RemoteFunctionCall<Boolean> isValidatorCall(final String address) {
     final org.web3j.abi.datatypes.Function function =
             new org.web3j.abi.datatypes.Function(
                     FUNC_ISVALIDATOR,
@@ -119,7 +115,7 @@ public class RepuContract extends Contract {
             });
   }
 
-  private RemoteFunctionCall<TransactionReceipt> voteValidatorCall(String address, BigInteger nonce) {
+  private RemoteFunctionCall<TransactionReceipt> voteValidatorCall(final String address, final BigInteger nonce) {
     final org.web3j.abi.datatypes.Function function =
             new org.web3j.abi.datatypes.Function(
                     FUNC_VOTEVALIDATOR,
@@ -128,7 +124,7 @@ public class RepuContract extends Contract {
     return executeRemoteCallTransaction(function);
   }
 
-  private RemoteFunctionCall<TransactionReceipt> nextTurnAndVoteCall(String address, BigInteger nonce) {
+  private RemoteFunctionCall<TransactionReceipt> nextTurnAndVoteCall(final String address, final BigInteger nonce) {
     final org.web3j.abi.datatypes.Function function =
             new org.web3j.abi.datatypes.Function(
                     FUNC_NEXTTURNANDVOTE,
@@ -157,7 +153,7 @@ public class RepuContract extends Contract {
   }
 
   public static RemoteCall<RepuContract> deploy(
-          Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
+          final Web3j web3j, final Credentials credentials, final ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
             RepuContract.class,
             web3j,
@@ -167,7 +163,7 @@ public class RepuContract extends Contract {
             FunctionEncoder.encodeConstructor(Arrays.asList(new Address(ProxyContract.ADDRESS), new Address(INITIAL_VALIDATOR))));
   }
 
-  public void setProxyContract(ProxyContract proxyContract) {
+  public void setProxyContract(final ProxyContract proxyContract) {
     this.proxyContract = proxyContract;
   }
 
@@ -183,13 +179,13 @@ public class RepuContract extends Contract {
 
   public List<String> nextValidators() throws Exception { return this.nextValidatorsCall().send(); }
 
-  public Boolean isValidator(String address) throws Exception { return this.isValidatorCall(address).send(); }
+  public Boolean isValidator(final String address) throws Exception { return this.isValidatorCall(address).send(); }
 
   public List<String> getValidators() throws Exception { return this.getValidatorsCall().send(); }
 
-  public void voteValidator(String address, BigInteger nonce) throws Exception { this.voteValidatorCall(address, nonce).send(); }
+  public void voteValidator(final String address, final BigInteger nonce) throws Exception { this.voteValidatorCall(address, nonce).send(); }
 
-  public void nextTurnAndVote(String address, BigInteger nonce) throws Exception { this.nextTurnAndVoteCall(address, nonce).send(); }
+  public void nextTurnAndVote(final String address, final BigInteger nonce) throws Exception { this.nextTurnAndVoteCall(address, nonce).send(); }
 
   public void nextTurn() throws Exception { this.nextTurnCall().send(); }
 

@@ -67,7 +67,7 @@ public class ProxyContract extends Contract {
     }
 
     public static RemoteCall<ProxyContract> deploy(
-            Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
+            final Web3j web3j, final Credentials credentials, final ContractGasProvider contractGasProvider) {
         return deployRemoteCall(
                 ProxyContract.class,
                 web3j,

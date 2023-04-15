@@ -61,8 +61,8 @@ public class RepuJsonRpcMethods extends ApiGroupJsonRpcMethods {
         createValidatorProvider(context, blockchain);
 
     return mapOf(
-        new RepuGetSigners(blockchainQueries, readOnlyValidatorProvider),
-        new RepuGetSignersAtHash(blockchainQueries, readOnlyValidatorProvider),
+        new RepuGetSigners(),
+        new RepuGetSignersAtHash(),
         new Propose(validatorProvider),
         new Discard(validatorProvider),
         new RepuProposals(validatorProvider),

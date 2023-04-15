@@ -18,6 +18,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.repu.headervalidationrules.CoinbaseHeaderValidationRule;
+import org.hyperledger.besu.consensus.repu.headervalidationrules.RepuDifficultyValidationRule;
 import org.hyperledger.besu.consensus.repu.headervalidationrules.RepuExtraDataValidationRule;
 import org.hyperledger.besu.consensus.repu.headervalidationrules.SignerRateLimitValidationRule;
 import org.hyperledger.besu.consensus.repu.headervalidationrules.VoteValidationRule;
@@ -68,23 +69,23 @@ public class BlockHeaderValidationRulesetFactory {
       final boolean isMergeEnabled) {
 
     final BlockHeaderValidator.Builder builder =
-        new BlockHeaderValidator.Builder();
-            //.addRule(new AncestryValidationRule())
-            //.addRule(new TimestampBoundedByFutureParameter(10))
-            //.addRule(
-            //    new GasLimitRangeAndDeltaValidationRule(
-            //        DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))
-            //.addRule(
-            //    new ConstantFieldValidationRule<>(
-            //        "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
-            //.addRule(new RepuExtraDataValidationRule(epochManager))
-            //.addRule(new RepuDifficultyValidationRule())
-            //.addRule(new SignerRateLimitValidationRule())
-            //.addRule(new CoinbaseHeaderValidationRule(epochManager))
-            //.addRule(new GasUsageValidationRule());
+        new BlockHeaderValidator.Builder()
+            .addRule(new AncestryValidationRule())
+            .addRule(new TimestampBoundedByFutureParameter(10))
+            .addRule(
+                new GasLimitRangeAndDeltaValidationRule(
+                    DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))
+            .addRule(
+                new ConstantFieldValidationRule<>(
+                    "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
+            .addRule(new RepuExtraDataValidationRule(epochManager))
+            .addRule(new RepuDifficultyValidationRule())
+            .addRule(new SignerRateLimitValidationRule())
+            .addRule(new CoinbaseHeaderValidationRule(epochManager))
+            .addRule(new GasUsageValidationRule());
 
     if (baseFeeMarket.isPresent()) {
-      //builder.addRule(new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket.get()));
+      builder.addRule(new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket.get()));
     }
 
     var mixHashRule =
@@ -92,14 +93,14 @@ public class BlockHeaderValidationRulesetFactory {
     var voteValidationRule = new VoteValidationRule();
     var repuTimestampRule = new TimestampMoreRecentThanParent(secondsBetweenBlocks);
 
-    /*if (isMergeEnabled) {
+    if (isMergeEnabled) {
       builder
           .addRule(new AttachedComposedFromDetachedRule(mixHashRule))
           .addRule(new AttachedComposedFromDetachedRule(voteValidationRule))
           .addRule(new AttachedComposedFromDetachedRule(repuTimestampRule));
     } else {
       builder.addRule(mixHashRule).addRule(voteValidationRule).addRule(repuTimestampRule);
-    }*/
+    }
 
     return builder;
   }

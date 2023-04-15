@@ -14,30 +14,17 @@
  */
 package org.hyperledger.besu.consensus.repu.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.repu.RepuHelpers;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class RepuGetSignersAtHash implements JsonRpcMethod {
-  private final BlockchainQueries blockchainQueries;
-  private final ValidatorProvider validatorProvider;
-
-  public RepuGetSignersAtHash(
-      final BlockchainQueries blockchainQueries, final ValidatorProvider validatorProvider) {
-    this.blockchainQueries = blockchainQueries;
-    this.validatorProvider = validatorProvider;
+  public RepuGetSignersAtHash() {
   }
 
   @Override
@@ -49,10 +36,5 @@ public class RepuGetSignersAtHash implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(),
             RepuHelpers.getValidators().stream().map(Objects::toString).collect(Collectors.toList()));
-  }
-
-  private Optional<BlockHeader> determineBlockHeader(final JsonRpcRequestContext request) {
-    final Hash hash = request.getRequiredParameter(0, Hash.class);
-    return blockchainQueries.blockByHash(hash).map(BlockWithMetadata::getHeader);
   }
 }
