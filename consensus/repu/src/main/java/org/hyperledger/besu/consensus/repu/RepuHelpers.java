@@ -26,6 +26,7 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.tx.gas.StaticGasProvider;
+
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -43,7 +44,8 @@ public class RepuHelpers {
 
     private static final BigInteger GAS_PRICE = new BigInteger("500000");
     private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
-    private static final String VOTE_FILE = "ValidatorVote";
+    private static final String VOTE_FILE = "validatorVote";
+    private static final int VOTATION_TIME = 5;
     private static Web3j web3j;
     private static NodeKey nodeKey;
     private static ProxyContract proxyContract;
@@ -192,7 +194,7 @@ public class RepuHelpers {
 
     public static void nextTurnAndVote(final long block, final String voterAddress) throws Exception {
         if (repuContract != null) {
-            if ((block + 1) % 5 == 0 && !voting) {
+            if ((block + 1) % VOTATION_TIME == 0 && !voting) {
                 voting = true;
                 Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
                 String address = readFile(votePath);
@@ -204,7 +206,7 @@ public class RepuHelpers {
                     repuContract.nextTurn();
 
                 }
-            } else if ((block + 1) % 5 != 0) {
+            } else if ((block + 1) % VOTATION_TIME != 0) {
                 voting = false;
                 repuContract.nextTurn();
             }
@@ -213,7 +215,7 @@ public class RepuHelpers {
 
     public static void voteValidator(final long block, final String voterAddress) throws Exception {
         if (repuContract != null) {
-            if ((block + 1) % 5 == 0 && !voting) {
+            if ((block + 1) % VOTATION_TIME == 0 && !voting) {
                 voting = true;
                 Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
                 String address = readFile(votePath);
@@ -221,7 +223,7 @@ public class RepuHelpers {
                     repuContract.voteValidator(address, getNonce(voterAddress));
                     voting = false;
                 }
-            } else if ((block + 1) % 5 != 0) voting = false;
+            } else if ((block + 1) % VOTATION_TIME != 0) voting = false;
         }
 
     }
@@ -229,9 +231,9 @@ public class RepuHelpers {
     private static String readFile(final Path path) throws IOException {
         if (path.toFile().exists()) {
             final List<String> info = Files.readAllLines(path);
-            if (info.size() != 1)
-                throw new IllegalArgumentException("ValidatorVote file has a invalid format.");
-            return info.get(0);
+            if (info.size() == 0) return null;
+            else if (info.size() > 1) throw new IllegalArgumentException("ValidatorVote file has a invalid format.");
+            else return info.get(0);
         }
         return null;
     }
@@ -245,12 +247,10 @@ public class RepuHelpers {
         try {
             if (repuContract != null) {
                 validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
-                //LOG.info("Next validator: " + nextValidator);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        //LOG.info(validations.toString());
     }
 
     public static BigInteger getNonce(final String address) {
