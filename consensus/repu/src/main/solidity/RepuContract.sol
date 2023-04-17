@@ -89,27 +89,26 @@ contract RepuContract {
             reputations[i] = validators_reputation[validators[i]];
         }
 
-        sortedValidators = bubbleSort(reputations, sortedValidators);
+        bubbleSort(reputations, sortedValidators);
         return sortedValidators;
     }
 
-    function bubbleSort(uint256[] memory arr1, address[] memory arr2) private pure returns (address[] memory){
+    function bubbleSort(uint256[] memory arr1, address[] memory arr2) private pure {
         uint len = arr1.length;
         uint256 temp1;
         address temp2;
-        for (uint i = 0; i < len - 1; i++) {
-            for (uint j = 0; j < len - i - 1; j++) {
-                if (arr1[j] < arr1[j + 1]) {
-                    temp1 = arr1[j];
-                    temp2 = arr2[j];
-                    arr1[j] = arr1[j + 1];
-                    arr2[j] = arr2[j + 1];
-                    arr1[j + 1] = temp1;
-                    arr2[j + 1] = temp2;
+        for (uint i = 0; i < len; i++) {
+            for (uint j = 1; j < (len - i); j++) {
+                if (arr1[j-1] < arr1[j]) {
+                    temp1 = arr1[j-1];
+                    temp2 = arr2[j-1];
+                    arr1[j-1] = arr1[j];
+                    arr2[j-1] = arr2[j];
+                    arr1[j] = temp1;
+                    arr2[j] = temp2;
                 }
             }
         }
-        return arr2;
     }
 
     function nextValidators() public view returns (address[] memory) {
@@ -282,7 +281,7 @@ contract RepuContract {
             sortedCandidates[i] = candidates[i];
         }
 
-        sortedCandidates = bubbleSort(votes, sortedCandidates);
+        bubbleSort(votes, sortedCandidates);
         return sortedCandidates;
     }
 
