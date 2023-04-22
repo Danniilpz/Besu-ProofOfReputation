@@ -8,15 +8,15 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 contract RepuContract {
 
-    mapping(address => uint256) public validators_reputation;
+    mapping(address => uint256) private validators_reputation;
     address[] private validators;
 
-    mapping(address => uint256) public candidates_votes;
+    mapping(address => uint256) private candidates_votes;
     address[] private candidates;
     address[] private voters;
     address finishVotingValidator;
 
-    mapping(address => uint256) public nodes_nonces;
+    mapping(address => uint256) private nodes_nonces;
     address[] private blackList;
 
     uint256 private index;
@@ -242,6 +242,10 @@ contract RepuContract {
         nonceWeight = _newNonceWeight;
     }
 
+    function getReputation(address _addr) public view returns(uint256) {
+        return validators_reputation[_addr];
+    }
+
     //votation methods
 
     function voteValidator(address _addr, uint256 nonce) timeToVote notVotedYet notVoteHimself(_addr) notInBlackList(_addr) public {
@@ -291,6 +295,10 @@ contract RepuContract {
 
     function getCandidates() public view returns (address[] memory) {
         return candidates;
+    }
+
+    function getVotes(address _addr) public view returns(uint256) {
+        return candidates_votes[_addr];
     }
 
     //proxy methods

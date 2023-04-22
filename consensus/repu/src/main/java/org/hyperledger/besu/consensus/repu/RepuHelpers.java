@@ -15,12 +15,15 @@
 package org.hyperledger.besu.consensus.repu;
 
 import io.netty.util.internal.StringUtil;
+import org.hyperledger.besu.consensus.repu.blockcreation.RepuBlockMiner;
 import org.hyperledger.besu.consensus.repu.blockcreation.RepuProposerSelector;
 import org.hyperledger.besu.consensus.repu.contracts.ProxyContract;
 import org.hyperledger.besu.consensus.repu.contracts.RepuContract;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
@@ -41,7 +44,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RepuHelpers {
-
+    private static final Logger LOG = LoggerFactory.getLogger(RepuBlockMiner.class);
     private static final BigInteger GAS_PRICE = new BigInteger("500000");
     private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
     private static final String VOTE_FILE = "validatorVote";
@@ -199,6 +202,7 @@ public class RepuHelpers {
                 Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
                 String address = readFile(votePath);
                 if (!StringUtil.isNullOrEmpty(address)) {
+                    LOG.info("Voting " + address);
                     repuContract.nextTurnAndVote(address, getNonce(voterAddress));
                     voting = false;
                 } else {
@@ -220,6 +224,7 @@ public class RepuHelpers {
                 Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
                 String address = readFile(votePath);
                 if (!StringUtil.isNullOrEmpty(address)) {
+                    LOG.info("Voting " + address);
                     repuContract.voteValidator(address, getNonce(voterAddress));
                     voting = false;
                 }
@@ -259,6 +264,17 @@ public class RepuHelpers {
             BigInteger nonce = ethGetTransactionCount.getTransactionCount();
             return nonce.add(new BigInteger("1"));
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void printInfo(final long block, final String address) {
+        try {
+            if (repuContract != null && block % VOTATION_TIME == 0) {
+                LOG.info("Votes count: " + repuContract.getVotes(address));
+                LOG.info("My reputation is: " + repuContract.getReputation(address));
+            }
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

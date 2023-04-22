@@ -55,6 +55,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
     @Override
     protected boolean mineBlock() throws Exception {
         try{
+            RepuHelpers.printInfo(parentHeader.getNumber(), localAddress.toString());
             if (RepuHelpers.addressIsAllowedToProduceNextBlock(
                     localAddress, parentHeader)) {
 
