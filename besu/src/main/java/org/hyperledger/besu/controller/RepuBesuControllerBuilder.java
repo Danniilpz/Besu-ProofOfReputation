@@ -86,7 +86,6 @@ public class RepuBesuControllerBuilder extends BesuControllerBuilder {
             miningParameters,
             new RepuBlockScheduler(
                 clock,
-                protocolContext.getConsensusContext(RepuContext.class).getValidatorProvider(),
                 localAddress,
                 secondsBetweenBlocks),
             epochManager);

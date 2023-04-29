@@ -26,12 +26,12 @@ public class RepuMiningTracker {
 
   public boolean isProposerAfter(final BlockHeader header) {
     final Address nextProposer =
-        RepuHelpers.getProposerForBlockAfter(header);
+        RepuHelpers.getValidatorForBlockAfter(header);
     return localAddress.equals(nextProposer);
   }
 
   public boolean isSigner() {
-    return RepuHelpers.isSigner(localAddress);
+    return RepuHelpers.isValidator(localAddress);
   }
 
   public boolean canMakeBlockNextRound(final BlockHeader header) {
@@ -39,6 +39,6 @@ public class RepuMiningTracker {
   }
 
   public boolean blockCreatedLocally(final BlockHeader header) {
-    return RepuHelpers.getProposerOfBlock(header).equals(localAddress);
+    return RepuHelpers.getValidatorOfBlock(header).equals(localAddress);
   }
 }

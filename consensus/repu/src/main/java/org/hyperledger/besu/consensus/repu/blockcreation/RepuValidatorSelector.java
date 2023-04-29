@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
  * <p>It does this be determining the available validators at the previous block, then selecting the
  * appropriate validator based on the chain height.
  */
-public class RepuProposerSelector {
+public class RepuValidatorSelector {
 
   /**
    * Determines which validator should create the block after that supplied.
@@ -33,7 +33,7 @@ public class RepuProposerSelector {
    * @param parentHeader The header of the previously received block.
    * @return The address of the node which is to propose a block for the provided Round.
    */
-  public Address selectProposerForNextBlock(final BlockHeader parentHeader) {
+  public Address selectValidatorForNextBlock(final BlockHeader parentHeader) {
     if(RepuHelpers.repuContract == null){
       return Address.fromHexString(RepuContract.INITIAL_VALIDATOR);
     }

@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RepuProposerSelectorTest {
+public class RepuValidatorSelectorTest {
 
   private final List<Address> validatorList =
       Arrays.asList(
@@ -37,9 +37,9 @@ public class RepuProposerSelectorTest {
 
     for (int prevBlockNumber = 0; prevBlockNumber < 10; prevBlockNumber++) {
       headerBuilderFixture.number(prevBlockNumber);
-      final RepuProposerSelector selector = new RepuProposerSelector();
+      final RepuValidatorSelector selector = new RepuValidatorSelector();
       final Address nextProposer =
-          selector.selectProposerForNextBlock(headerBuilderFixture.buildHeader());
+          selector.selectValidatorForNextBlock(headerBuilderFixture.buildHeader());
       assertThat(nextProposer)
           .isEqualTo(validatorList.get((prevBlockNumber + 1) % validatorList.size()));
     }

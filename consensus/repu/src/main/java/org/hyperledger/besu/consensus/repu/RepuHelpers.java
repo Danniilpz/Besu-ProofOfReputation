@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.repu;
 
 import io.netty.util.internal.StringUtil;
 import org.hyperledger.besu.consensus.repu.blockcreation.RepuBlockMiner;
-import org.hyperledger.besu.consensus.repu.blockcreation.RepuProposerSelector;
+import org.hyperledger.besu.consensus.repu.blockcreation.RepuValidatorSelector;
 import org.hyperledger.besu.consensus.repu.contracts.ProxyContract;
 import org.hyperledger.besu.consensus.repu.contracts.RepuContract;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -29,7 +29,6 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.tx.gas.StaticGasProvider;
-
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -48,7 +47,7 @@ public class RepuHelpers {
     private static final BigInteger GAS_PRICE = new BigInteger("500000");
     private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
     private static final String VOTE_FILE = "validatorVote";
-    private static final int VOTATION_TIME = 5;
+    public static final int VOTATION_TIME = 5;
     private static Web3j web3j;
     private static NodeKey nodeKey;
     private static ProxyContract proxyContract;
@@ -62,17 +61,17 @@ public class RepuHelpers {
             {"3", RepuContract.INITIAL_VALIDATOR},
     }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
-    public static Address getProposerOfBlock(final BlockHeader header) {
+    public static Address getValidatorOfBlock(final BlockHeader header) {
         final RepuExtraData extraData = RepuExtraData.decode(header);
         return extraData.getProposerAddress();
     }
 
-    static Address getProposerForBlockAfter(final BlockHeader parent) {
-        final RepuProposerSelector proposerSelector = new RepuProposerSelector();
-        return proposerSelector.selectProposerForNextBlock(parent);
+    static Address getValidatorForBlockAfter(final BlockHeader parent) {
+        final RepuValidatorSelector validatorSelector = new RepuValidatorSelector();
+        return validatorSelector.selectValidatorForNextBlock(parent);
     }
 
-    static boolean isSigner(final Address candidate) {
+    static boolean isValidator(final Address candidate) {
         try {
             return repuContract != null
                     ? repuContract.isValidator(String.valueOf(candidate))
@@ -107,7 +106,7 @@ public class RepuHelpers {
                 Thread.sleep(100);
             }
 
-            if (!isSigner(candidate)) return false;
+            if (!isValidator(candidate)) return false;
 
             if (Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)))) {
                 return true;
@@ -134,9 +133,6 @@ public class RepuHelpers {
             e.printStackTrace();
             return false;
         }
-
-
-        //LOG.info("Timestamp: " + " Current time: " + System.currentTimeMillis());
     }
 
     public static void setNodeKey(final NodeKey nodeKey) {
@@ -160,8 +156,7 @@ public class RepuHelpers {
 
                     validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
 
-                    //LOG.info("Detected consensus contract in address {}", proxyContract.getConsensusAddress());
-                    //LOG.info("Validators: "+ repuContract.getValidators().toString());
+                    LOG.info("Detected consensus contract in address {}", proxyContract.getConsensusAddress());
                 } else {
                     repuContract = null;
                     contractDeployed = false;
@@ -183,8 +178,8 @@ public class RepuHelpers {
 
         validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
 
-        //LOG.info("Deployed proxy contract into {} and consensus contract into {}",
-        //        proxyContract.getContractAddress(), repuContract.getContractAddress());
+        LOG.info("Deployed proxy contract into {} and consensus contract into {}",
+                proxyContract.getContractAddress(), repuContract.getContractAddress());
 
         contractDeployed = true;
         contractDeploying = false;
@@ -270,9 +265,14 @@ public class RepuHelpers {
 
     public static void printInfo(final long block, final String address) {
         try {
-            if (repuContract != null && block % VOTATION_TIME == 0) {
-                LOG.info("Votes count: " + repuContract.getVotes(address));
-                LOG.info("My reputation is: " + repuContract.getReputation(address));
+            if (repuContract != null) {
+                if (block % VOTATION_TIME == 0) {
+                    LOG.info("Votes count: " + repuContract.getVotes(address));
+                } else if ((block - 1) % VOTATION_TIME == 0) {
+                    if(isValidator(Address.fromHexString(address))) {
+                        LOG.info("I am a validator. My reputation is: " + repuContract.getReputation(address));
+                    }
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -65,7 +65,7 @@ public class RepuBlockSchedulerTest {
     final long secondsBetweenBlocks = 5L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final RepuBlockScheduler scheduler =
-        new RepuBlockScheduler(clock, validatorProvider, localAddr, secondsBetweenBlocks);
+        new RepuBlockScheduler(clock, localAddr, secondsBetweenBlocks);
 
     // There are 2 validators, therefore block 2 will put localAddr as the in-turn voter, therefore
     // parent block should be number 1.
@@ -86,7 +86,7 @@ public class RepuBlockSchedulerTest {
     final long secondsBetweenBlocks = 5L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final RepuBlockScheduler scheduler =
-        new RepuBlockScheduler(clock, validatorProvider, localAddr, secondsBetweenBlocks);
+        new RepuBlockScheduler(clock, localAddr, secondsBetweenBlocks);
 
     // There are 2 validators, therefore block 3 will put localAddr as the out-turn voter, therefore
     // parent block should be number 2.
@@ -107,7 +107,7 @@ public class RepuBlockSchedulerTest {
     final long secondsBetweenBlocks = 5L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final RepuBlockScheduler scheduler =
-        new RepuBlockScheduler(clock, validatorProvider, localAddr, secondsBetweenBlocks);
+        new RepuBlockScheduler(clock, localAddr, secondsBetweenBlocks);
 
     // There are 2 validators, therefore block 2 will put localAddr as the in-turn voter, therefore
     // parent block should be number 1.

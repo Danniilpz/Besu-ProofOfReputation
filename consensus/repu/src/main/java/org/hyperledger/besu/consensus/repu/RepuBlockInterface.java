@@ -40,7 +40,7 @@ public class RepuBlockInterface implements BlockInterface {
 
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {
-    return RepuHelpers.getProposerOfBlock(header);
+    return RepuHelpers.getValidatorOfBlock(header);
   }
 
   @Override

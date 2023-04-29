@@ -73,7 +73,6 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
             }
         } catch (InterruptedException | TransactionException e) {
             LOG.error("Execution has been interrupted");
-            e.printStackTrace();
             return false;
         }
 

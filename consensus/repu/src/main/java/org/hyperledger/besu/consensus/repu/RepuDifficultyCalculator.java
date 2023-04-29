@@ -37,7 +37,7 @@ public class RepuDifficultyCalculator implements DifficultyCalculator {
       final long time, final BlockHeader parent, final ProtocolContext context) {
 
     final Address nextProposer =
-        RepuHelpers.getProposerForBlockAfter(parent);
+        RepuHelpers.getValidatorForBlockAfter(parent);
     return nextProposer.equals(localAddress) ? IN_TURN_DIFFICULTY : OUT_OF_TURN_DIFFICULTY;
   }
 }

@@ -23,17 +23,18 @@ contract RepuContract {
     address private proxy;
     Proxy private p;
     uint256 constant private MAX_VALIDATORS = 5;
-    uint256 constant private VOTATION_TIME = 5;
+    uint256 private votationTime;
     uint256 private balanceWeight = 10;
     uint256 private nonceWeight = 1;
     address private owner;
 
-    constructor(address _proxy, address _initValidator) {
+    constructor(address _proxy, address _initValidator, uint256 _votationTime) {
         addValidator(_initValidator);
         updateReputation();
         index = 0;
         proxy = _proxy;
         owner = msg.sender;
+        votationTime = _votationTime;
     }
 
     //modifiers
@@ -70,7 +71,7 @@ contract RepuContract {
     }
 
     modifier timeToVote() {
-        require(block.number % VOTATION_TIME == 0, "Not in votation time");
+        require(block.number % votationTime == 0, "Not in votation time");
         _;
     }
 
@@ -169,7 +170,7 @@ contract RepuContract {
 
     function nextTurn() isAllowed public {
         index++;
-        if ((getBlock() - 1) % VOTATION_TIME == 0) {
+        if ((getBlock() - 1) % votationTime == 0) {
             finishVoting();
             index++;
         }
@@ -177,7 +178,7 @@ contract RepuContract {
 
     function nextTurnAndVote(address _addr, uint256 _nonce) public {
         nextTurn();
-        if (getBlock() % VOTATION_TIME == 0) {
+        if (getBlock() % votationTime == 0) {
             voteValidator(_addr, _nonce);
         }
     }

@@ -138,7 +138,7 @@ public class RepuBlockCreatorTest {
 
     final Block createdBlock = blockCreator.createBlock(5L).getBlock();
 
-    Java6Assertions.assertThat(RepuHelpers.getProposerOfBlock(createdBlock.getHeader()))
+    Java6Assertions.assertThat(RepuHelpers.getValidatorOfBlock(createdBlock.getHeader()))
         .isEqualTo(proposerAddress);
   }
 

@@ -107,7 +107,7 @@ public class RepuProtocolSchedule {
         .difficultyCalculator(new RepuDifficultyCalculator(localNodeAddress))
         .blockReward(Wei.ZERO)
         .skipZeroBlockRewards(true)
-        .miningBeneficiaryCalculator(RepuHelpers::getProposerOfBlock)
+        .miningBeneficiaryCalculator(RepuHelpers::getValidatorOfBlock)
         .blockHeaderFunctions(new RepuBlockHeaderFunctions());
   }
 

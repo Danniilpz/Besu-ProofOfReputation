@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.repu.blockcreation;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -27,7 +26,6 @@ public class RepuBlockScheduler extends DefaultBlockScheduler {
 
     public RepuBlockScheduler(
             final Clock clock,
-            final ValidatorProvider validatorProvider,
             final Address localNodeAddress,
             final long secondsBetweenBlocks) {
         super(secondsBetweenBlocks, 0L, clock);
@@ -47,8 +45,8 @@ public class RepuBlockScheduler extends DefaultBlockScheduler {
     }
 
     private int calculateTurnBasedDelay(final BlockHeader parentHeader) {
-        final RepuProposerSelector proposerSelector = new RepuProposerSelector();
-        final Address nextProposer = proposerSelector.selectProposerForNextBlock(parentHeader);
+        final RepuValidatorSelector proposerSelector = new RepuValidatorSelector();
+        final Address nextProposer = proposerSelector.selectValidatorForNextBlock(parentHeader);
 
         if (nextProposer.equals(localNodeAddress)) {
             return 0;

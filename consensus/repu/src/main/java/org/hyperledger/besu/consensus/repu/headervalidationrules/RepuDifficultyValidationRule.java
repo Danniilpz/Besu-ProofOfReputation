@@ -32,7 +32,7 @@ public class RepuDifficultyValidationRule implements AttachedBlockHeaderValidati
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
-    final Address actualBlockCreator = RepuHelpers.getProposerOfBlock(header);
+    final Address actualBlockCreator = RepuHelpers.getValidatorOfBlock(header);
 
     final RepuDifficultyCalculator diffCalculator =
         new RepuDifficultyCalculator(actualBlockCreator);
