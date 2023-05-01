@@ -171,7 +171,8 @@ contract RepuContract {
     }
 
     function nextTurn() isAllowed public {
-        nodes_blocks[validators[index]]++;
+        uint256 i = index % validators.length;
+        nodes_blocks[validators[i]]++;
         index++;
         if ((getBlock() - 1) % votationTime == 0) {
             finishVoting();
