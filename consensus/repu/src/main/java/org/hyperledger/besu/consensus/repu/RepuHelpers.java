@@ -47,7 +47,7 @@ public class RepuHelpers {
     private static final BigInteger GAS_PRICE = new BigInteger("500000");
     private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
     private static final String VOTE_FILE = "validatorVote";
-    public static final int VOTATION_TIME = 5;
+    public static final int VOTING_ROUND = 5;
     private static Web3j web3j;
     private static NodeKey nodeKey;
     private static ProxyContract proxyContract;
@@ -192,7 +192,7 @@ public class RepuHelpers {
 
     public static void nextTurnAndVote(final long block, final String voterAddress) throws Exception {
         if (repuContract != null) {
-            if ((block + 1) % VOTATION_TIME == 0 && !voting) {
+            if ((block + 1) % VOTING_ROUND == 0 && !voting) {
                 voting = true;
                 Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
                 String address = readFile(votePath);
@@ -205,7 +205,7 @@ public class RepuHelpers {
                     repuContract.nextTurn();
 
                 }
-            } else if ((block + 1) % VOTATION_TIME != 0) {
+            } else if ((block + 1) % VOTING_ROUND != 0) {
                 voting = false;
                 repuContract.nextTurn();
             }
@@ -214,7 +214,7 @@ public class RepuHelpers {
 
     public static void voteValidator(final long block, final String voterAddress) throws Exception {
         if (repuContract != null) {
-            if ((block + 1) % VOTATION_TIME == 0 && !voting) {
+            if ((block + 1) % VOTING_ROUND == 0 && !voting) {
                 voting = true;
                 Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
                 String address = readFile(votePath);
@@ -223,7 +223,7 @@ public class RepuHelpers {
                     repuContract.voteValidator(address, getNonce(voterAddress));
                     voting = false;
                 }
-            } else if ((block + 1) % VOTATION_TIME != 0) voting = false;
+            } else if ((block + 1) % VOTING_ROUND != 0) voting = false;
         }
 
     }
@@ -266,9 +266,9 @@ public class RepuHelpers {
     public static void printInfo(final long block, final String address) {
         try {
             if (repuContract != null) {
-                if (block % VOTATION_TIME == 0) {
+                if (block % VOTING_ROUND == 0) {
                     LOG.info("Votes count: " + repuContract.getVotes(address));
-                } else if ((block - 1) % VOTATION_TIME == 0) {
+                } else if ((block - 1) % VOTING_ROUND == 0) {
                     if(isValidator(Address.fromHexString(address))) {
                         LOG.info("I am a validator. My reputation is: " + repuContract.getReputation(address));
                     }
