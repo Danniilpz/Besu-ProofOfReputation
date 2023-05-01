@@ -17,15 +17,17 @@ contract RepuContract {
     address finishVotingValidator;
 
     mapping(address => uint256) private nodes_nonces;
+    mapping(address => uint256) private nodes_blocks;
     address[] private blackList;
 
     uint256 private index;
     address private proxy;
     Proxy private p;
-    uint256 constant private MAX_VALIDATORS = 5;
+    uint256 constant private MAX_VALIDATORS = 2;
     uint256 private votationTime;
-    uint256 private balanceWeight = 10;
-    uint256 private nonceWeight = 1;
+    uint256 public weightBalance = 10;
+    uint256 public weightNonce = 1;
+    uint256 public weightBlocks = 1;
     address private owner;
 
     constructor(address _proxy, address _initValidator, uint256 _votationTime) {
@@ -169,6 +171,7 @@ contract RepuContract {
     }
 
     function nextTurn() isAllowed public {
+        nodes_blocks[validators[index]]++;
         index++;
         if ((getBlock() - 1) % votationTime == 0) {
             finishVoting();
@@ -232,15 +235,22 @@ contract RepuContract {
     }
 
     function calculateReputation(address _addr) private view returns (uint256) {
-        return ((_addr.balance / (10 ** 18)) / balanceWeight) + (nodes_nonces[_addr] / nonceWeight);
+        return
+        ((_addr.balance / (10 ** 18)) / weightBalance)
+        + (nodes_nonces[_addr] / weightNonce)
+        + (nodes_blocks[_addr] / weightBlocks);
     }
 
-    function setBalanceWeight(uint256 _newBalanceWeight) isOwner external {
-        balanceWeight = _newBalanceWeight;
+    function setWeightBalance(uint256 _newWeightBalance) isOwner external {
+        weightBalance = _newWeightBalance;
     }
 
-    function setNonceWeight(uint256 _newNonceWeight) isOwner external {
-        nonceWeight = _newNonceWeight;
+    function setWeightNonce(uint256 _newWeightNonce) isOwner external {
+        weightNonce = _newWeightNonce;
+    }
+
+    function setWeightBlocks(uint256 _newWeightBlocks) isOwner external {
+        weightBlocks = _newWeightBlocks;
     }
 
     function getReputation(address _addr) public view returns(uint256) {
