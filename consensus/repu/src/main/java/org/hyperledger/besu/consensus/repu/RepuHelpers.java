@@ -106,7 +106,7 @@ public class RepuHelpers {
             if (repuContract != null && repuContract.getBlock() > parent.getNumber()) return false;
 
             while (!validations.containsKey(String.valueOf(parent.getNumber() + 1))) {
-                updateList(parent);
+                updateList(parent.getNumber());
                 Thread.sleep(100);
             }
 
@@ -139,7 +139,7 @@ public class RepuHelpers {
         }
     }
 
-    public static void nextTurnAndVote(final Long block, final String voterAddress) throws Exception {
+    public static void nextTurnAndVote(final long block, final String voterAddress) throws Exception {
         if (repuContract != null) {
             if ((block + 1) % VOTING_ROUND == 0 && !voting) {
                 voting = true;
@@ -161,7 +161,7 @@ public class RepuHelpers {
         }
     }
 
-    public static void voteValidator(final Long block, final String voterAddress) throws Exception {
+    public static void voteValidator(final long block, final String voterAddress) throws Exception {
         if (repuContract != null) {
             if ((block + 1) % VOTING_ROUND == 0 && !voting) {
                 voting = true;
@@ -177,17 +177,17 @@ public class RepuHelpers {
 
     }
 
-    public static void updateList(final BlockHeader parentHeader) {
+    public static void updateList(final long block) {
         try {
             if (repuContract != null) {
-                validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
+                validations.put(String.valueOf(block + 1), repuContract.nextValidators().get(0));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void getRepuContract(final Long block) {
+    public static void getRepuContract(final long block) {
         if (repuContract == null) {
             try {
                 if (!contractDeploying && block > 2) {
@@ -210,7 +210,7 @@ public class RepuHelpers {
         }
     }
 
-    public static void deployContracts(final Long block) throws Exception {
+    public static void deployContracts(final long block) throws Exception {
         contractDeploying = true;
 
         proxyContract = ProxyContract.deploy(web3j, getCredentials(),
@@ -228,7 +228,7 @@ public class RepuHelpers {
         contractDeploying = false;
     }
 
-    public static void checkContractsAreDeployed(final Long block) throws Exception {
+    public static void checkContractsAreDeployed(final long block) throws Exception {
         if (!contractDeployed && !contractDeploying)
             deployContracts(block);
     }
@@ -260,7 +260,7 @@ public class RepuHelpers {
         return Credentials.create(nodeKey.getPrivateKey().getKey(), nodeKey.getPublicKey().toString());
     }
 
-    public static void printInfo(final Long block, final String address) {
+    public static void printInfo(final long block, final String address) {
         try {
             if (repuContract != null) {
                 if (block % VOTING_ROUND == 0) {
