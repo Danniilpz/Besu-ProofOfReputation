@@ -22,6 +22,8 @@ import org.hyperledger.besu.consensus.repu.contracts.RepuContract;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Credentials;
@@ -29,6 +31,7 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.tx.gas.StaticGasProvider;
+
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -44,17 +47,17 @@ import java.util.stream.Stream;
 
 public class RepuHelpers {
     private static final Logger LOG = LoggerFactory.getLogger(RepuBlockMiner.class);
-    private static final BigInteger GAS_PRICE = new BigInteger("500000");
-    private static final BigInteger GAS_LIMIT = new BigInteger("3000000");
+    private static final BigInteger GAS_PRICE = BigInteger.valueOf(500000);
+    private static final BigInteger GAS_LIMIT = BigInteger.valueOf(3000000);
     private static final String VOTE_FILE = "validatorVote";
-    public static final int VOTING_ROUND = 5;
+    public static final Integer VOTING_ROUND = 5;
     private static Web3j web3j;
     private static NodeKey nodeKey;
     private static ProxyContract proxyContract;
     public static RepuContract repuContract;
-    private static boolean contractDeployed = false;
-    private static boolean contractDeploying = false;
-    private static boolean voting = false;
+    private static Boolean contractDeployed = false;
+    private static Boolean contractDeploying = false;
+    private static Boolean voting = false;
     public static Map<String, String> validations = Stream.of(new String[][]{
             {"1", RepuContract.INITIAL_VALIDATOR},
             {"2", RepuContract.INITIAL_VALIDATOR},
@@ -97,6 +100,7 @@ public class RepuHelpers {
         }
     }
 
+    @SuppressWarnings("BusyWait")
     public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final BlockHeader parent) {
         try {
             if (repuContract != null && repuContract.getBlock() > parent.getNumber()) return false;
@@ -135,7 +139,7 @@ public class RepuHelpers {
         }
     }
 
-    public static void nextTurnAndVote(final long block, final String voterAddress) throws Exception {
+    public static void nextTurnAndVote(final Long block, final String voterAddress) throws Exception {
         if (repuContract != null) {
             if ((block + 1) % VOTING_ROUND == 0 && !voting) {
                 voting = true;
@@ -157,7 +161,7 @@ public class RepuHelpers {
         }
     }
 
-    public static void voteValidator(final long block, final String voterAddress) throws Exception {
+    public static void voteValidator(final Long block, final String voterAddress) throws Exception {
         if (repuContract != null) {
             if ((block + 1) % VOTING_ROUND == 0 && !voting) {
                 voting = true;
@@ -183,7 +187,7 @@ public class RepuHelpers {
         }
     }
 
-    public static void getRepuContract(final long block) {
+    public static void getRepuContract(final Long block) {
         if (repuContract == null) {
             try {
                 if (!contractDeploying && block > 2) {
@@ -206,7 +210,7 @@ public class RepuHelpers {
         }
     }
 
-    public static void deployContracts(final long block) throws Exception {
+    public static void deployContracts(final Long block) throws Exception {
         contractDeploying = true;
 
         proxyContract = ProxyContract.deploy(web3j, getCredentials(),
@@ -224,12 +228,13 @@ public class RepuHelpers {
         contractDeploying = false;
     }
 
-    public static void checkContractsAreDeployed(final long block) throws Exception {
+    public static void checkContractsAreDeployed(final Long block) throws Exception {
         if (!contractDeployed && !contractDeploying)
             deployContracts(block);
     }
 
-    private static String readFile(final Path path) throws IOException {
+    @Nullable
+    private static String readFile(@NotNull final Path path) throws IOException {
         if (path.toFile().exists()) {
             final List<String> info = Files.readAllLines(path);
             if (info.size() == 0) return null;
@@ -239,27 +244,29 @@ public class RepuHelpers {
         return null;
     }
 
+    @NotNull
     public static BigInteger getNonce(final String address) {
         try {
             EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(address, DefaultBlockParameterName.LATEST).send();
             BigInteger nonce = ethGetTransactionCount.getTransactionCount();
-            return nonce.add(new BigInteger("1"));
+            return nonce.add(BigInteger.valueOf(1));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    @NotNull
     public static Credentials getCredentials() {
         return Credentials.create(nodeKey.getPrivateKey().getKey(), nodeKey.getPublicKey().toString());
     }
 
-    public static void printInfo(final long block, final String address) {
+    public static void printInfo(final Long block, final String address) {
         try {
             if (repuContract != null) {
                 if (block % VOTING_ROUND == 0) {
                     LOG.info("Votes count: " + repuContract.getVotes(address));
                 } else if ((block - 1) % VOTING_ROUND == 0) {
-                    if(isValidator(Address.fromHexString(address))) {
+                    if (isValidator(Address.fromHexString(address))) {
                         LOG.info("I am a validator. My reputation is: " + repuContract.getReputation(address));
                     }
                 }
