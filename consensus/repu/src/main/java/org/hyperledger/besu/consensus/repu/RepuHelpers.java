@@ -71,16 +71,6 @@ public class RepuHelpers {
         return validatorSelector.selectValidatorForNextBlock(parent);
     }
 
-    static boolean isValidator(final Address candidate) {
-        try {
-            return repuContract != null
-                    ? repuContract.isValidator(String.valueOf(candidate))
-                    : candidate.toString().equals(RepuContract.INITIAL_VALIDATOR);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static List<Address> getValidators() {
         final List<Address> validators = new ArrayList<>();
 
@@ -95,6 +85,16 @@ public class RepuHelpers {
         }
 
         return validators;
+    }
+
+    static boolean isValidator(final Address candidate) {
+        try {
+            return repuContract != null
+                    ? repuContract.isValidator(String.valueOf(candidate))
+                    : candidate.toString().equals(RepuContract.INITIAL_VALIDATOR);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final BlockHeader parent) {
@@ -135,61 +135,6 @@ public class RepuHelpers {
         }
     }
 
-    public static void setNodeKey(final NodeKey nodeKey) {
-        RepuHelpers.nodeKey = nodeKey;
-    }
-
-    public static void setWeb3j(final Web3j web3j) {
-        RepuHelpers.web3j = web3j;
-    }
-
-    public static void getRepuContract(final BlockHeader parentHeader) {
-        if (repuContract == null) {
-            try {
-                if (!contractDeploying && parentHeader.getNumber() > 2) {
-                    contractDeployed = true;
-
-                    proxyContract = new ProxyContract(web3j, getCredentials(),
-                            new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
-                    repuContract = new RepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(),
-                            new StaticGasProvider(GAS_PRICE, GAS_LIMIT), proxyContract);
-
-                    validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
-
-                    LOG.info("Detected consensus contract in address {}", proxyContract.getConsensusAddress());
-                } else {
-                    repuContract = null;
-                    contractDeployed = false;
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    public static void deployContracts(final long block) throws Exception {
-        contractDeploying = true;
-
-        proxyContract = ProxyContract.deploy(web3j, getCredentials(),
-                new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
-        repuContract = RepuContract.deploy(web3j, getCredentials(),
-                new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
-        repuContract.setProxyContract(proxyContract);
-
-        validations.put(String.valueOf(block), repuContract.nextValidators().get(0));
-
-        LOG.info("Deployed proxy contract into {} and consensus contract into {}",
-                proxyContract.getContractAddress(), repuContract.getContractAddress());
-
-        contractDeployed = true;
-        contractDeploying = false;
-    }
-
-    public static void checkContractsAreDeployed(final long block) throws Exception {
-        if (!contractDeployed && !contractDeploying)
-            deployContracts(block);
-    }
-
     public static void nextTurnAndVote(final long block, final String voterAddress) throws Exception {
         if (repuContract != null) {
             if ((block + 1) % VOTING_ROUND == 0 && !voting) {
@@ -228,21 +173,6 @@ public class RepuHelpers {
 
     }
 
-    private static String readFile(final Path path) throws IOException {
-        if (path.toFile().exists()) {
-            final List<String> info = Files.readAllLines(path);
-            if (info.size() == 0) return null;
-            else if (info.size() > 1) throw new IllegalArgumentException("ValidatorVote file has a invalid format.");
-            else return info.get(0);
-        }
-        return null;
-    }
-
-    public static Credentials getCredentials() {
-        return Credentials.create(nodeKey.getPrivateKey().getKey(), nodeKey.getPublicKey().toString());
-    }
-
-
     public static void updateList(final BlockHeader parentHeader) {
         try {
             if (repuContract != null) {
@@ -253,6 +183,62 @@ public class RepuHelpers {
         }
     }
 
+    public static void getRepuContract(final long block) {
+        if (repuContract == null) {
+            try {
+                if (!contractDeploying && block > 2) {
+                    contractDeployed = true;
+
+                    proxyContract = new ProxyContract(web3j, getCredentials(),
+                            new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
+                    repuContract = new RepuContract(proxyContract.getConsensusAddress(), web3j, getCredentials(),
+                            new StaticGasProvider(GAS_PRICE, GAS_LIMIT), proxyContract);
+
+                    validations.put(String.valueOf(block + 1), repuContract.nextValidators().get(0));
+
+                    LOG.info("Detected consensus contract in address {}", proxyContract.getConsensusAddress());
+                } else {
+                    contractDeployed = false;
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public static void deployContracts(final long block) throws Exception {
+        contractDeploying = true;
+
+        proxyContract = ProxyContract.deploy(web3j, getCredentials(),
+                new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
+        repuContract = RepuContract.deploy(web3j, getCredentials(),
+                new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
+        repuContract.setProxyContract(proxyContract);
+
+        validations.put(String.valueOf(block), repuContract.nextValidators().get(0));
+
+        LOG.info("Deployed proxy contract into {} and consensus contract into {}",
+                proxyContract.getContractAddress(), repuContract.getContractAddress());
+
+        contractDeployed = true;
+        contractDeploying = false;
+    }
+
+    public static void checkContractsAreDeployed(final long block) throws Exception {
+        if (!contractDeployed && !contractDeploying)
+            deployContracts(block);
+    }
+
+    private static String readFile(final Path path) throws IOException {
+        if (path.toFile().exists()) {
+            final List<String> info = Files.readAllLines(path);
+            if (info.size() == 0) return null;
+            else if (info.size() > 1) throw new IllegalArgumentException("ValidatorVote file has a invalid format.");
+            else return info.get(0);
+        }
+        return null;
+    }
+
     public static BigInteger getNonce(final String address) {
         try {
             EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(address, DefaultBlockParameterName.LATEST).send();
@@ -261,6 +247,10 @@ public class RepuHelpers {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static Credentials getCredentials() {
+        return Credentials.create(nodeKey.getPrivateKey().getKey(), nodeKey.getPublicKey().toString());
     }
 
     public static void printInfo(final long block, final String address) {
@@ -277,5 +267,13 @@ public class RepuHelpers {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static void setNodeKey(final NodeKey nodeKey) {
+        RepuHelpers.nodeKey = nodeKey;
+    }
+
+    public static void setWeb3j(final Web3j web3j) {
+        RepuHelpers.web3j = web3j;
     }
 }

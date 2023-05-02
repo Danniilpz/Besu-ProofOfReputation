@@ -49,7 +49,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
         String port = blockCreator.apply(parentHeader).getPort();
         String httpUrl = "http://localhost:" + port;
         RepuHelpers.setWeb3j(Web3j.build(new HttpService(httpUrl)));
-        RepuHelpers.getRepuContract(parentHeader);
+        RepuHelpers.getRepuContract(parentHeader.getNumber());
     }
 
     @Override
