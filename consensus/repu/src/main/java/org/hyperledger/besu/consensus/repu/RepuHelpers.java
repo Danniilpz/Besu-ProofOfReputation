@@ -167,7 +167,7 @@ public class RepuHelpers {
         }
     }
 
-    public static void deployContracts(final BlockHeader parentHeader) throws Exception {
+    public static void deployContracts(final long block) throws Exception {
         contractDeploying = true;
 
         proxyContract = ProxyContract.deploy(web3j, getCredentials(),
@@ -176,7 +176,7 @@ public class RepuHelpers {
                 new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
         repuContract.setProxyContract(proxyContract);
 
-        validations.put(String.valueOf(parentHeader.getNumber() + 1), repuContract.nextValidators().get(0));
+        validations.put(String.valueOf(block), repuContract.nextValidators().get(0));
 
         LOG.info("Deployed proxy contract into {} and consensus contract into {}",
                 proxyContract.getContractAddress(), repuContract.getContractAddress());
@@ -185,9 +185,9 @@ public class RepuHelpers {
         contractDeploying = false;
     }
 
-    public static void checkContractsAreDeployed(final BlockHeader parent) throws Exception {
+    public static void checkContractsAreDeployed(final long block) throws Exception {
         if (!contractDeployed && !contractDeploying)
-            deployContracts(parent);
+            deployContracts(block);
     }
 
     public static void nextTurnAndVote(final long block, final String voterAddress) throws Exception {

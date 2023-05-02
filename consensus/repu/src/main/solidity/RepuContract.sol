@@ -72,7 +72,7 @@ contract RepuContract {
         _;
     }
 
-    modifier timeToVote() {
+    modifier isVotingRound() {
         require(block.number % votingRound == 0, "Not in votation time");
         _;
     }
@@ -260,7 +260,7 @@ contract RepuContract {
 
     //votation methods
 
-    function voteValidator(address _addr, uint256 nonce) timeToVote notVotedYet notVoteHimself(_addr) notInBlackList(_addr) public {
+    function isVotingRound(address _addr, uint256 nonce) timeToVote notVotedYet notVoteHimself(_addr) notInBlackList(_addr) public {
         if (nodes_nonces[msg.sender] >= nonce) {
             addToBlackList(_addr);
         } else {
