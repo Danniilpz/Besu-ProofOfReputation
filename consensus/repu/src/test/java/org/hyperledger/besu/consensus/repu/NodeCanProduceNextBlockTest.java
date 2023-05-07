@@ -81,7 +81,7 @@ public class NodeCanProduceNextBlockTest {
 
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, block_1.getHeader()))
+                localAddress.toString(), block_1.getHeader()))
         .isTrue();
   }
 
@@ -109,12 +109,12 @@ public class NodeCanProduceNextBlockTest {
 
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, block_1.getHeader()))
+                localAddress.toString(), block_1.getHeader()))
         .isFalse();
 
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, block_2.getHeader()))
+                localAddress.toString(), block_2.getHeader()))
         .isTrue();
   }
 
@@ -175,15 +175,15 @@ public class NodeCanProduceNextBlockTest {
 
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, block_1.getHeader()))
+                localAddress.toString(), block_1.getHeader()))
         .isFalse();
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, block_2.getHeader()))
+                localAddress.toString(), block_2.getHeader()))
         .isTrue();
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, block_3.getHeader()))
+                localAddress.toString(), block_3.getHeader()))
         .isTrue();
   }
 
@@ -211,11 +211,11 @@ public class NodeCanProduceNextBlockTest {
 
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, genesisBlock.getHeader()))
+                localAddress.toString(), genesisBlock.getHeader()))
         .isTrue();
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                localAddress, block_1.getHeader()))
+                localAddress.toString(), block_1.getHeader()))
         .isTrue();
   }
 
@@ -240,7 +240,7 @@ public class NodeCanProduceNextBlockTest {
     assertThatThrownBy(
             () ->
                 RepuHelpers.addressIsAllowedToProduceNextBlock(
-                    localAddress, parentHeader))
+                    localAddress.toString(), parentHeader))
         .isInstanceOf(RuntimeException.class)
         .hasMessage("The block was on a orphaned chain.");
   }
@@ -260,7 +260,7 @@ public class NodeCanProduceNextBlockTest {
     final BlockHeader parentHeader = headerBuilder.buildHeader();
     assertThat(
             RepuHelpers.addressIsAllowedToProduceNextBlock(
-                AddressHelpers.ofValue(1), parentHeader))
+                AddressHelpers.ofValue(1).toString(), parentHeader))
         .isFalse();
   }
 }

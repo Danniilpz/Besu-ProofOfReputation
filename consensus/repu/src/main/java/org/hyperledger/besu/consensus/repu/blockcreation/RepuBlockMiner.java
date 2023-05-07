@@ -49,7 +49,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
         String port = blockCreator.apply(parentHeader).getPort();
         String httpUrl = "http://localhost:" + port;
         RepuHelpers.setWeb3j(Web3j.build(new HttpService(httpUrl)));
-        RepuHelpers.getRepuContract(parentHeader.getNumber());
+        RepuHelpers.getContracts(parentHeader.getNumber());
     }
 
     @Override
@@ -57,7 +57,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
         try{
             RepuHelpers.printInfo(parentHeader.getNumber(), localAddress.toString());
             if (RepuHelpers.addressIsAllowedToProduceNextBlock(
-                    localAddress, parentHeader)) {
+                    localAddress.toString(), parentHeader)) {
 
                 boolean mined = super.mineBlock();
 
@@ -75,7 +75,6 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
             LOG.error("Execution has been interrupted");
             return false;
         }
-
     }
 
 

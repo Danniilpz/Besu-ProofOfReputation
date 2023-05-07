@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.repu;
 
 import io.netty.util.internal.StringUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.hyperledger.besu.consensus.repu.blockcreation.RepuBlockMiner;
 import org.hyperledger.besu.consensus.repu.blockcreation.RepuValidatorSelector;
 import org.hyperledger.besu.consensus.repu.contracts.ProxyContract;
@@ -22,6 +23,7 @@ import org.hyperledger.besu.consensus.repu.contracts.RepuContract;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.util.log.FramedLogMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -55,8 +57,8 @@ public class RepuHelpers {
     private static NodeKey nodeKey;
     private static ProxyContract proxyContract;
     public static RepuContract repuContract;
-    private static Boolean contractDeployed = false;
-    private static Boolean contractDeploying = false;
+    private static Boolean contractsDeployed = false;
+    private static Boolean contractsDeploying = false;
     private static Boolean voting = false;
     public static Map<String, String> validations = Stream.of(new String[][]{
             {"1", RepuContract.INITIAL_VALIDATOR},
@@ -90,42 +92,43 @@ public class RepuHelpers {
         return validators;
     }
 
-    static boolean isValidator(final Address candidate) {
+    static boolean isValidator(final String address) {
         try {
             return repuContract != null
-                    ? repuContract.isValidator(String.valueOf(candidate))
-                    : candidate.toString().equals(RepuContract.INITIAL_VALIDATOR);
+                    ? repuContract.isValidator(String.valueOf(address))
+                    : address.equals(RepuContract.INITIAL_VALIDATOR);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @SuppressWarnings("BusyWait")
-    public static boolean addressIsAllowedToProduceNextBlock(final Address candidate, final BlockHeader parent) {
+    public static boolean addressIsAllowedToProduceNextBlock(final String address, final BlockHeader parent) {
+        Long lastBlock = parent.getNumber();
         try {
-            if (repuContract != null && repuContract.getBlock() > parent.getNumber()) return false;
+            if (repuContract != null && repuContract.getBlock() > lastBlock) return false;
 
-            while (!validations.containsKey(String.valueOf(parent.getNumber() + 1))) {
-                updateList(parent.getNumber());
+            while (!validations.containsKey(String.valueOf(lastBlock + 1))) {
+                updateList(lastBlock + 1);
                 Thread.sleep(100);
             }
 
-            if (!isValidator(candidate)) return false;
+            if (!isValidator(address)) return false;
 
-            if (Objects.equals(candidate.toString(), validations.get(String.valueOf(parent.getNumber() + 1)))) {
+            if (Objects.equals(address, validations.get(String.valueOf(lastBlock + 1)))) {
                 return true;
             } else {
                 /*List<String> nextValidators = repuContract.nextValidators();
-                long lastTimestamp = parent.getTimestamp() * 1000;
+                Long lastTimestamp = parent.getTimestamp() * 1000;
                 int i = 0;
                 while (true) {
                     if (System.currentTimeMillis() - lastTimestamp >= 30000) {
                         i++;
-                        if (candidate.toString().equals(nextValidators.get(i % nextValidators.size()))) {
-                            validations.put(String.valueOf(parent.getNumber() + 1), candidate.toString());
+                        if (address.equals(nextValidators.get(i % nextValidators.size()))) {
+                            validations.put(String.valueOf(lastBlock + 1), address);
                             return true;
                         }
-                    } else if (repuContract.getBlock() > parent.getNumber()) {
+                    } else if (repuContract.getBlock() > lastBlock) {
                         break;
                     } else {
                         Thread.sleep(1000);
@@ -139,15 +142,14 @@ public class RepuHelpers {
         }
     }
 
-    public static void nextTurnAndVote(final long block, final String voterAddress) throws Exception {
+    public static void nextTurnAndVote(final Long block, final String voterAddress) throws Exception {
         if (repuContract != null) {
             if ((block + 1) % VOTING_ROUND == 0 && !voting) {
                 voting = true;
-                Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
-                String address = readFile(votePath);
-                if (!StringUtil.isNullOrEmpty(address)) {
-                    LOG.info("Voting " + address);
-                    repuContract.nextTurnAndVote(address, getNonce(voterAddress));
+                String voteAddress = readVoteFile();
+                if (!StringUtil.isNullOrEmpty(voteAddress)) {
+                    LOG.info(getInfoFrame(voterAddress, voteAddress, true, false, false));
+                    repuContract.nextTurnAndVote(voteAddress, getNonce(voterAddress));
                     voting = false;
                 } else {
                     voting = false;
@@ -161,37 +163,38 @@ public class RepuHelpers {
         }
     }
 
-    public static void voteValidator(final long block, final String voterAddress) throws Exception {
+    public static void voteValidator(final Long lastBlock, final String voterAddress) throws Exception {
         if (repuContract != null) {
-            if ((block + 1) % VOTING_ROUND == 0 && !voting) {
+            if ((lastBlock + 2) % VOTING_ROUND == 0 && !voting) {
                 voting = true;
-                Path votePath = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
-                String address = readFile(votePath);
-                if (!StringUtil.isNullOrEmpty(address)) {
-                    LOG.info("Voting " + address);
-                    repuContract.voteValidator(address, getNonce(voterAddress));
+                String voteAddress = readVoteFile();
+                if (!StringUtil.isNullOrEmpty(voteAddress)) {
+                    LOG.info(getInfoFrame(voterAddress, voteAddress, true, false, false));
+                    repuContract.voteValidator(voteAddress, getNonce(voterAddress));
                     voting = false;
                 }
-            } else if ((block + 1) % VOTING_ROUND != 0) voting = false;
+            } else if ((lastBlock + 2) % VOTING_ROUND != 0) {
+                voting = false;
+            }
         }
 
     }
 
-    public static void updateList(final long block) {
+    public static void updateList(final Long block) {
         try {
             if (repuContract != null) {
-                validations.put(String.valueOf(block + 1), repuContract.nextValidators().get(0));
+                validations.put(String.valueOf(block), repuContract.nextValidators().get(0));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void getRepuContract(final long block) {
+    public static void getContracts(final Long block) {
         if (repuContract == null) {
             try {
-                if (!contractDeploying && block > 2) {
-                    contractDeployed = true;
+                if (!contractsDeploying && block > 2) {
+                    contractsDeployed = true;
 
                     proxyContract = new ProxyContract(web3j, getCredentials(),
                             new StaticGasProvider(GAS_PRICE, GAS_LIMIT));
@@ -202,7 +205,7 @@ public class RepuHelpers {
 
                     LOG.info("Detected consensus contract in address {}", proxyContract.getConsensusAddress());
                 } else {
-                    contractDeployed = false;
+                    contractsDeployed = false;
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -210,8 +213,8 @@ public class RepuHelpers {
         }
     }
 
-    public static void deployContracts(final long block) throws Exception {
-        contractDeploying = true;
+    public static void deployContracts(final Long block) throws Exception {
+        contractsDeploying = true;
 
         proxyContract = ProxyContract.deploy(web3j, getCredentials(),
                 new StaticGasProvider(GAS_PRICE, GAS_LIMIT)).send();
@@ -224,21 +227,22 @@ public class RepuHelpers {
         LOG.info("Deployed proxy contract into {} and consensus contract into {}",
                 proxyContract.getContractAddress(), repuContract.getContractAddress());
 
-        contractDeployed = true;
-        contractDeploying = false;
+        contractsDeployed = true;
+        contractsDeploying = false;
     }
 
-    public static void checkContractsAreDeployed(final long block) throws Exception {
-        if (!contractDeployed && !contractDeploying)
+    public static void checkContractsAreDeployed(final Long block) throws Exception {
+        if (!contractsDeployed && !contractsDeploying)
             deployContracts(block);
     }
 
     @Nullable
-    private static String readFile(@NotNull final Path path) throws IOException {
+    private static String readVoteFile() throws IOException {
+        Path path = Paths.get(new File("./data").getCanonicalPath()).resolve(VOTE_FILE);
         if (path.toFile().exists()) {
             final List<String> info = Files.readAllLines(path);
             if (info.size() == 0) return null;
-            else if (info.size() > 1) throw new IllegalArgumentException("ValidatorVote file has a invalid format.");
+            else if (info.size() > 1) throw new IllegalArgumentException("validatorVote file has a invalid format.");
             else return info.get(0);
         }
         return null;
@@ -260,14 +264,22 @@ public class RepuHelpers {
         return Credentials.create(nodeKey.getPrivateKey().getKey(), nodeKey.getPublicKey().toString());
     }
 
-    public static void printInfo(final long block, final String address) {
+    public static void setNodeKey(final NodeKey nodeKey) {
+        RepuHelpers.nodeKey = nodeKey;
+    }
+
+    public static void setWeb3j(final Web3j web3j) {
+        RepuHelpers.web3j = web3j;
+    }
+
+    public static void printInfo(final Long block, final String address) {
         try {
             if (repuContract != null) {
                 if (block % VOTING_ROUND == 0) {
-                    LOG.info("Votes count: " + repuContract.getVotes(address));
+                    LOG.info(getInfoFrame(address, false, true, false));
                 } else if ((block - 1) % VOTING_ROUND == 0) {
-                    if (isValidator(Address.fromHexString(address))) {
-                        LOG.info("I am a validator. My reputation is: " + repuContract.getReputation(address));
+                    if (isValidator(address)) {
+                        LOG.info(getInfoFrame(address, false, false, true));
                     }
                 }
             }
@@ -276,11 +288,42 @@ public class RepuHelpers {
         }
     }
 
-    public static void setNodeKey(final NodeKey nodeKey) {
-        RepuHelpers.nodeKey = nodeKey;
+    public static String getInfoFrame(String address, Boolean votePhase, Boolean countPhase, Boolean closePhase) throws Exception {
+        return getInfoFrame(address, StringUtils.EMPTY, votePhase, countPhase, closePhase);
     }
 
-    public static void setWeb3j(final Web3j web3j) {
-        RepuHelpers.web3j = web3j;
+    public static String getInfoFrame(String address, String voteAddress, Boolean votePhase, Boolean countPhase, Boolean closePhase) throws Exception {
+        final List<String> lines = new ArrayList<>();
+        if (votePhase) {
+            lines.add("Balance: " + repuContract.getBalance(address)
+                    + " - Nonce: " + getNonce(address)
+                    + " - Produced blocks: " + repuContract.getProducedBlocks(address));
+            lines.add("");
+            lines.add("Sending vote to address: " + voteAddress);
+        } else if (countPhase) {
+            lines.add("Votes received: " + repuContract.getVotes(address));
+            lines.add("");
+            lines.add("Calculated reputation / vote weight: " + repuContract.getReputation(address));
+            lines.add("");
+            lines.add("Results: ");
+            List<String> candidates = repuContract.getSortedCandidates();
+            for (String candidate : candidates) {
+                lines.add(" - " + candidate + ": " + repuContract.getVotes(candidate) + " votes");
+            }
+        } else if (closePhase) {
+            if (isValidator(address)) {
+                lines.add("Node selected as validator!");
+                lines.add("");
+            }
+            lines.add("Current reputation: " + repuContract.getReputation(address));
+            lines.add("New validators list: ");
+            List<String> validators = repuContract.getValidators();
+            for (String validator : validators) {
+                lines.add(" - " + validator + ": " + repuContract.getReputation(validator) + " reputation");
+            }
+        }
+
+
+        return FramedLogMessage.generate(lines);
     }
 }

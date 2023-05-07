@@ -31,7 +31,7 @@ public class SignerRateLimitValidationRule implements AttachedBlockHeaderValidat
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     final Address blockSigner = RepuHelpers.getValidatorOfBlock(header);
 
-    if (!RepuHelpers.addressIsAllowedToProduceNextBlock(blockSigner, parent)) {
+    if (!RepuHelpers.addressIsAllowedToProduceNextBlock(blockSigner.toString(), parent)) {
       LOG.info("Invalid block header: {} is not allowed to produce next block", blockSigner);
       return false;
     }

@@ -21,22 +21,23 @@ contract RepuContract {
     address[] private blackList;
 
     uint256 private index;
-    address private proxy;
-    Proxy private p;
-    uint256 constant private MAX_VALIDATORS = 2;
+    address private proxyAddress;
+    Proxy private proxy;
+    uint256 private maxValidators;
     uint256 private votingRound;
-    uint256 public weightBalance = 10;
-    uint256 public weightNonce = 1;
-    uint256 public weightBlocks = 1;
+    uint256 public weightBalance = 1;
+    uint256 public weightNonce = 3;
+    uint256 public weightBlocks = 2;
     address private owner;
 
     constructor(address _proxy, address _initValidator, uint256 _votingRound) {
         addValidator(_initValidator);
         updateReputation();
         index = 0;
-        proxy = _proxy;
+        proxyAddress = _proxy;
         owner = msg.sender;
         votingRound = _votingRound;
+        maxValidators = 2;
     }
 
     //modifiers
@@ -52,8 +53,8 @@ contract RepuContract {
     }
 
     modifier hasCorrectProxyAddress(address _new) {
-        address new_proxy = RepuContract(_new).getProxy();
-        require(proxy == new_proxy, "Contract proxy address is not correct");
+        address new_proxy = RepuContract(_new).getProxyAddress();
+        require(proxyAddress == new_proxy, "Contract proxy address is not correct");
         _;
     }
 
@@ -62,7 +63,7 @@ contract RepuContract {
         _;
     }
 
-    modifier notVotedYet() {
+    modifier notVotedYet {
         require(findAddress(msg.sender, voters) == voters.length, "Vote already registered");
         _;
     }
@@ -72,13 +73,14 @@ contract RepuContract {
         _;
     }
 
-    modifier isVotingRound() {
-        require(block.number % votingRound == 0, "Not in votation time");
+    modifier isVotingRound {
+        require((getBlock() + 1) % votingRound == 0 || getBlock() % votingRound == 0, "Not in votation time");
         _;
     }
 
     modifier notInBlackList(address _addr) {
         require(findAddress(_addr, blackList) == blackList.length, "Address in the black list");
+        require(findAddress(msg.sender, blackList) == blackList.length, "Voter in the black list");
         _;
     }
 
@@ -139,7 +141,7 @@ contract RepuContract {
 
     function addValidators(address[] memory _addresses) private {
         uint256 acceptedValidators = 0;
-        for (uint i = 0; i < _addresses.length && acceptedValidators < MAX_VALIDATORS; i++) {
+        for (uint i = 0; i < _addresses.length && acceptedValidators < maxValidators; i++) {
             //has voted and not in the black list
             if (nodes_nonces[_addresses[i]] > 0
             && findAddress(_addresses[i], blackList) == blackList.length
@@ -147,14 +149,14 @@ contract RepuContract {
                 if (isValidator(_addresses[i])) {
                     deleteFromValidators(_addresses[i]);
                 }
-                else if (validators.length + i == MAX_VALIDATORS) {
+                else if (validators.length + i == maxValidators) {
                     validators.pop();
                 }
                 acceptedValidators++;
             }
         }
 
-        for (uint i = 0; i < _addresses.length && i < MAX_VALIDATORS; i++) {
+        for (uint i = 0; i < _addresses.length && i < maxValidators; i++) {
             if (nodes_nonces[_addresses[i]] > 0) {
                 addValidator(_addresses[i]);
                 candidates_votes[_addresses[i]] = 0;
@@ -176,11 +178,11 @@ contract RepuContract {
         index++;
         if ((getBlock() - 1) % votingRound == 0) {
             finishVoting();
-            index++;
+            index = 0;
         }
     }
 
-    function nextTurnAndVote(address _addr, uint256 _nonce) public {
+    function nextTurnAndVote(address _addr, uint256 _nonce) isAllowed public {
         nextTurn();
         if (getBlock() % votingRound == 0) {
             voteValidator(_addr, _nonce);
@@ -237,9 +239,9 @@ contract RepuContract {
 
     function calculateReputation(address _addr) private view returns (uint256) {
         return
-        ((_addr.balance / (10 ** 18)) / weightBalance)
-        + (nodes_nonces[_addr] / weightNonce)
-        + (nodes_blocks[_addr] / weightBlocks);
+        ((_addr.balance / (10 ** 18)) * weightBalance)
+        + (nodes_nonces[_addr] * weightNonce)
+        + (nodes_blocks[_addr] * weightBlocks);
     }
 
     function setWeightBalance(uint256 _newWeightBalance) isOwner external {
@@ -254,13 +256,25 @@ contract RepuContract {
         weightBlocks = _newWeightBlocks;
     }
 
+    function setMaxValidators(uint256 _newMaxValidators) isOwner external {
+        maxValidators = _newMaxValidators;
+    }
+
+    function getBalance(address _addr) public view returns(uint256) {
+        return _addr.balance / (10 ** 18);
+    }
+
+    function getProducedBlocks(address _addr) public view returns(uint256) {
+        return nodes_blocks[_addr];
+    }
+
     function getReputation(address _addr) public view returns(uint256) {
-        return validators_reputation[_addr];
+        return calculateReputation(_addr);
     }
 
     //votation methods
 
-    function isVotingRound(address _addr, uint256 nonce) timeToVote notVotedYet notVoteHimself(_addr) notInBlackList(_addr) public {
+    function voteValidator(address _addr, uint256 nonce) isVotingRound notVotedYet notVoteHimself(_addr) notInBlackList(_addr) public {
         if (nodes_nonces[msg.sender] >= nonce) {
             addToBlackList(_addr);
         } else {
@@ -277,18 +291,18 @@ contract RepuContract {
     function finishVoting() private {
         finishVotingValidator = msg.sender;
         address[] memory sortedCandidates = getSortedCandidates();
-        delete candidates;
-        for (uint i = 0; i < voters.length; i++) {
-            candidates_votes[voters[i]] = 0;
-        }
         delete voters;
+        for (uint i = 0; i < candidates.length; i++) {
+            candidates_votes[candidates[i]] = 0;
+        }
+        delete candidates;
 
         addValidators(sortedCandidates);
 
         updateReputation();
     }
 
-    function getSortedCandidates() internal view returns (address[] memory) {
+    function getSortedCandidates() public view returns (address[] memory) {
         uint256[] memory votes = new uint256[](candidates.length);
         address[] memory sortedCandidates = new address[](candidates.length);
 
@@ -315,12 +329,12 @@ contract RepuContract {
 
     //proxy methods
 
-    function getProxy() public view returns (address) {
-        return (proxy);
+    function getProxyAddress() public view returns (address) {
+        return (proxyAddress);
     }
 
-    function updateContractAddress(address _new) hasCorrectProxyAddress(_new) isContract(_new) external {
-        Proxy(proxy).setConsensusAddress(_new);
+    function updateContractAddress(address _new) hasCorrectProxyAddress(_new) isContract(_new) isOwner external {
+        Proxy(proxyAddress).setConsensusAddress(_new);
     }
 }
 

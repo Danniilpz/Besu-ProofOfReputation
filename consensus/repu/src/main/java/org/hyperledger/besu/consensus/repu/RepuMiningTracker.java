@@ -31,11 +31,11 @@ public class RepuMiningTracker {
   }
 
   public boolean isSigner() {
-    return RepuHelpers.isValidator(localAddress);
+    return RepuHelpers.isValidator(localAddress.toString());
   }
 
   public boolean canMakeBlockNextRound(final BlockHeader header) {
-    return RepuHelpers.addressIsAllowedToProduceNextBlock(localAddress, header);
+    return RepuHelpers.addressIsAllowedToProduceNextBlock(localAddress.toString(), header);
   }
 
   public boolean blockCreatedLocally(final BlockHeader header) {
