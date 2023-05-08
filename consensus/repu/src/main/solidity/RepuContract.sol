@@ -284,12 +284,13 @@ contract RepuContract {
                 candidates.push(_addr);
             }
             candidates_votes[_addr] += calculateReputation(msg.sender);
+            candidates = getSortedCandidates();
         }
     }
 
     function finishVoting() private {
         finishVotingValidator = msg.sender;
-        address[] memory sortedCandidates = getSortedCandidates();
+        address[] memory sortedCandidates = candidates;
         delete voters;
         for (uint i = 0; i < candidates.length; i++) {
             candidates_votes[candidates[i]] = 0;

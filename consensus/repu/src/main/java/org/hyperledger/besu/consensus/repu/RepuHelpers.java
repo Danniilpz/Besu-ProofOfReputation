@@ -306,7 +306,7 @@ public class RepuHelpers {
             lines.add("Calculated reputation / vote weight: " + repuContract.getReputation(address));
             lines.add("");
             lines.add("Results: ");
-            List<String> candidates = repuContract.getSortedCandidates();
+            List<String> candidates = repuContract.getCandidates();
             for (String candidate : candidates) {
                 lines.add(" - " + candidate + ": " + repuContract.getVotes(candidate) + " votes");
             }
