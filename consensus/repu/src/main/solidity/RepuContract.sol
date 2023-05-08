@@ -27,7 +27,7 @@ contract RepuContract {
     uint256 private weightBalance = 1;
     uint256 private weightNonce = 3;
     uint256 private weightBlocks = 2;
-    uint256 private maxValidators = 4;
+    uint256 private maxValidators = 5;
     address private owner;
 
     constructor(address _proxy, address _initValidator, uint256 _votingRound) {
@@ -290,14 +290,13 @@ contract RepuContract {
 
     function finishVoting() private {
         finishVotingValidator = msg.sender;
-        address[] memory sortedCandidates = candidates;
         delete voters;
+
+        addValidators(candidates);
         for (uint i = 0; i < candidates.length; i++) {
             candidates_votes[candidates[i]] = 0;
         }
         delete candidates;
-
-        addValidators(sortedCandidates);
 
         updateReputation();
     }

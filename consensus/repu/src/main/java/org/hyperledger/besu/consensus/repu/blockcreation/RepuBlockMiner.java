@@ -54,7 +54,7 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
 
     @Override
     protected boolean mineBlock() throws Exception {
-        try{
+/*        try{*/
             RepuHelpers.printInfo(parentHeader.getNumber(), localAddress.toString());
             if (RepuHelpers.addressIsAllowedToProduceNextBlock(
                     localAddress.toString(), parentHeader)) {
@@ -71,10 +71,10 @@ public class RepuBlockMiner extends BlockMiner<RepuBlockCreator> {
                 RepuHelpers.voteValidator(parentHeader.getNumber(), localAddress.toString());
                 return true; // terminate mining.
             }
-        } catch (InterruptedException | TransactionException e) {
+/*        } catch (InterruptedException | TransactionException e) {
             LOG.error("Execution has been interrupted");
             return false;
-        }
+        }*/
     }
 
 
