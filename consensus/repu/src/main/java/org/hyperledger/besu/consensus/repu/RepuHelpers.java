@@ -49,8 +49,8 @@ import java.util.stream.Stream;
 
 public class RepuHelpers {
     private static final Logger LOG = LoggerFactory.getLogger(RepuBlockMiner.class);
-    private static final BigInteger GAS_PRICE = BigInteger.valueOf(500000);
-    private static final BigInteger GAS_LIMIT = BigInteger.valueOf(3000000);
+    private static final BigInteger GAS_PRICE = BigInteger.valueOf(1000);
+    private static final BigInteger GAS_LIMIT = BigInteger.valueOf(3000000000L);
     private static final String VOTE_FILE = "validatorVote";
     public static final Integer VOTING_ROUND = 5;
     private static Web3j web3j;
@@ -278,9 +278,7 @@ public class RepuHelpers {
                 if (block % VOTING_ROUND == 0) {
                     LOG.info(getInfoFrame(address, false, true, false));
                 } else if ((block - 1) % VOTING_ROUND == 0) {
-                    if (isValidator(address)) {
-                        LOG.info(getInfoFrame(address, false, false, true));
-                    }
+                    LOG.info(getInfoFrame(address, false, false, true));
                 }
             }
         } catch (Exception e) {
@@ -288,18 +286,20 @@ public class RepuHelpers {
         }
     }
 
-    public static String getInfoFrame(String address, Boolean votePhase, Boolean countPhase, Boolean closePhase) throws Exception {
+    public static String getInfoFrame(final String address, final Boolean votePhase, final Boolean countPhase,
+                                      final Boolean closePhase) throws Exception {
         return getInfoFrame(address, StringUtils.EMPTY, votePhase, countPhase, closePhase);
     }
 
-    public static String getInfoFrame(String address, String voteAddress, Boolean votePhase, Boolean countPhase, Boolean closePhase) throws Exception {
+    public static String getInfoFrame(final String address, final String voteAddress, final Boolean votePhase,
+                                      final Boolean countPhase, final Boolean closePhase) throws Exception {
         final List<String> lines = new ArrayList<>();
         if (votePhase) {
             lines.add("Balance: " + repuContract.getBalance(address)
                     + " - Nonce: " + getNonce(address)
                     + " - Produced blocks: " + repuContract.getProducedBlocks(address));
             lines.add("");
-            lines.add("Sending vote to address: " + voteAddress);
+            lines.add("Sending vote for address: " + voteAddress);
         } else if (countPhase) {
             lines.add("Votes received: " + repuContract.getVotes(address));
             lines.add("");

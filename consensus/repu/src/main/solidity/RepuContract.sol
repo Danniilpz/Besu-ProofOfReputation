@@ -23,11 +23,11 @@ contract RepuContract {
     uint256 private index;
     address private proxyAddress;
     Proxy private proxy;
-    uint256 private maxValidators;
     uint256 private votingRound;
-    uint256 public weightBalance = 1;
-    uint256 public weightNonce = 3;
-    uint256 public weightBlocks = 2;
+    uint256 private weightBalance = 1;
+    uint256 private weightNonce = 3;
+    uint256 private weightBlocks = 2;
+    uint256 private maxValidators = 4;
     address private owner;
 
     constructor(address _proxy, address _initValidator, uint256 _votingRound) {
@@ -37,7 +37,6 @@ contract RepuContract {
         proxyAddress = _proxy;
         owner = msg.sender;
         votingRound = _votingRound;
-        maxValidators = 2;
     }
 
     //modifiers
@@ -142,7 +141,7 @@ contract RepuContract {
     function addValidators(address[] memory _addresses) private {
         uint256 acceptedValidators = 0;
         for (uint i = 0; i < _addresses.length && acceptedValidators < maxValidators; i++) {
-            //has voted and not in the black list
+            //has voted, has enough balance and not in the black list
             if (nodes_nonces[_addresses[i]] > 0
             && findAddress(_addresses[i], blackList) == blackList.length
                 && _addresses[i].balance > 0) {
