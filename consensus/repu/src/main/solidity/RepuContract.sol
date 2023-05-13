@@ -156,7 +156,9 @@ contract RepuContract {
         }
 
         for (uint i = 0; i < _addresses.length && i < maxValidators; i++) {
-            if (nodes_nonces[_addresses[i]] > 0) {
+            if (nodes_nonces[_addresses[i]] > 0
+            && findAddress(_addresses[i], blackList) == blackList.length
+                && _addresses[i].balance > 0) {
                 addValidator(_addresses[i]);
                 candidates_votes[_addresses[i]] = 0;
             }
