@@ -33,6 +33,7 @@ dependencies {
   implementation project(':config')
   implementation project(':pki')
   implementation project(':consensus:clique')
+  implementation project(':consensus:repu')
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
   implementation project(':consensus:ibftlegacy')

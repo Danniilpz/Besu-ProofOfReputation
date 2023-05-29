@@ -42,6 +42,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String QBFT_CONFIG_KEY = "qbft";
   private static final String CLIQUE_CONFIG_KEY = "clique";
+  private static final String REPU_CONFIG_KEY = "repu";
   private static final String EC_CURVE_CONFIG_KEY = "eccurve";
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
   private static final String DISCOVERY_CONFIG_KEY = "discovery";
@@ -98,6 +99,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
       return QBFT_CONFIG_KEY;
     } else if (isClique()) {
       return CLIQUE_CONFIG_KEY;
+    } else if (isRepu()) {
+      return REPU_CONFIG_KEY;
     } else {
       return "unknown";
     }
@@ -122,6 +125,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   public boolean isClique() {
     return configRoot.has(CLIQUE_CONFIG_KEY);
   }
+
+  @Override
+  public boolean isRepu() {
+    return configRoot.has(REPU_CONFIG_KEY); }
 
   @Override
   public boolean isIbft2() {
@@ -174,6 +181,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return JsonUtil.getObjectNode(configRoot, CLIQUE_CONFIG_KEY)
         .map(CliqueConfigOptions::new)
         .orElse(CliqueConfigOptions.DEFAULT);
+  }
+
+  @Override
+  public RepuConfigOptions getRepuConfigOptions() {
+    return JsonUtil.getObjectNode(configRoot, REPU_CONFIG_KEY)
+            .map(RepuConfigOptions::new)
+            .orElse(RepuConfigOptions.DEFAULT);
   }
 
   @Override
@@ -457,6 +471,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
+    }
+    if (isRepu()) {
+      builder.put("repu", getRepuConfigOptions().asMap());
     }
     if (isEthHash()) {
       builder.put("ethash", getEthashConfigOptions().asMap());

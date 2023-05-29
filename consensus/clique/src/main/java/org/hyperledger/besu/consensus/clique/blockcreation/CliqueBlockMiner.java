@@ -43,7 +43,7 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
   }
 
   @Override
-  protected boolean mineBlock() throws InterruptedException {
+  protected boolean mineBlock() throws Exception {
     if (CliqueHelpers.addressIsAllowedToProduceNextBlock(
         localAddress, protocolContext, parentHeader)) {
       return super.mineBlock();

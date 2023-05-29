@@ -39,6 +39,7 @@ dependencies {
   testImplementation project(':besu')
   testImplementation project(':config')
   testImplementation project(':consensus:clique')
+  testImplementation project(':consensus:repu')
   testImplementation project(':datatypes')
   testImplementation project(':enclave')
   testImplementation project(':ethereum:api')

@@ -126,7 +126,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
     return blockCreator.createBlock(Optional.empty(), Optional.empty(), timestamp);
   }
 
-  protected boolean mineBlock() throws InterruptedException {
+  protected boolean mineBlock() throws Exception {
     // Ensure the block is allowed to be mined - i.e. the timestamp on the new block is sufficiently
     // ahead of the parent, and still within allowable clock tolerance.
     LOG.trace("Started a mining operation.");

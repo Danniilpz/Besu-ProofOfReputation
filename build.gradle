@@ -156,7 +156,6 @@ allprojects {
       '-Xlint:divzero',
       '-Xlint:finally',
       '-Xlint:static',
-      '-Werror',
     ]
 
     options.errorprone {

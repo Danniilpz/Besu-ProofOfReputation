@@ -18,6 +18,7 @@ import static org.hyperledger.besu.crypto.ECPointUtil.fromBouncyCastleECPoint;
 
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
+import org.hyperledger.besu.plugin.services.securitymodule.data.PrivateKey;
 import org.hyperledger.besu.plugin.services.securitymodule.data.PublicKey;
 import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
 
@@ -33,12 +34,14 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class KeyPairSecurityModule implements SecurityModule {
   private final KeyPair keyPair;
+  private final PrivateKey privateKey;
   private final PublicKey publicKey;
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
   public KeyPairSecurityModule(final KeyPair keyPair) {
     this.keyPair = keyPair;
     this.publicKey = convertPublicKey(keyPair.getPublicKey());
+    this.privateKey = convertPrivateKey(keyPair.getPrivateKey());
   }
 
   private PublicKey convertPublicKey(final SECPPublicKey publicKey) {
@@ -49,6 +52,10 @@ public class KeyPairSecurityModule implements SecurityModule {
       throw new SecurityModuleException(
           "Unexpected error while converting ECPoint: " + e.getMessage(), e);
     }
+  }
+
+  private PrivateKey convertPrivateKey(final SECPPrivateKey privateKey) {
+    return new PrivateKeyImpl(privateKey);
   }
 
   @Override
@@ -64,6 +71,11 @@ public class KeyPairSecurityModule implements SecurityModule {
   @Override
   public PublicKey getPublicKey() throws SecurityModuleException {
     return publicKey;
+  }
+
+  @Override
+  public PrivateKey getPrivateKey() throws SecurityModuleException {
+    return privateKey;
   }
 
   @Override
@@ -109,6 +121,19 @@ public class KeyPairSecurityModule implements SecurityModule {
     @Override
     public ECPoint getW() {
       return w;
+    }
+  }
+
+  private static class PrivateKeyImpl implements PrivateKey {
+    private final String key;
+
+    PrivateKeyImpl(final SECPPrivateKey key) {
+      this.key = key.toString();
+    }
+
+    @Override
+    public String getKey() {
+      return key;
     }
   }
 }

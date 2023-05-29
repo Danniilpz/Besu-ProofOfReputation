@@ -1,0 +1,24 @@
+Para compilar el código de Besu, ejecutar el siguiente comando en la ruta raiz del proyecto:
+
+./gradlew installDist
+
+Para generar las claves y el address de los nodos Hyperledger Besu, ejecutar cada uno de los siguientes comandos en el directorio /data dentro del directorio raiz de cada nodo.
+
+besu --data-path=data public-key export-address --to=data/node1Address
+
+besu --data-path=data public-key export-address --to=data/node2Address
+
+besu --data-path=data public-key export-address --to=data/node3Address
+
+besu --data-path=data public-key export-address --to=data/node4Address
+
+Para ejecutar los nodos, ejecutar cada uno de los siguientes comandos en el directorio raiz de cada nodo:
+
+besu --data-path=data --genesis-file=..\repuGenesis_demo.json --network-id 123 --rpc-http-enabled --rpc-ws-enabled --rpc-http-api=ETH,NET,REPU,DEBUG --host-allowlist="*" --rpc-http-cors-origins="all" --rpc-http-port=8545 --rpc-ws-port=8645
+
+besu --data-path=data --genesis-file=..\repuGenesis_demo.json --bootnodes=enode://b9d12e89349e96fa224e27dea17de65bd2ecc8aab871534fb7232dad51ca16445eaf262371fae2e23bd57e890af75f35370db1238c67ac9927f8458fd5b37205@127.0.0.1:30303 --network-id 123 --p2p-port=30304 --rpc-http-enabled --rpc-ws-enabled --rpc-http-api=ETH,NET,REPU,DEBUG --host-allowlist="*" --rpc-http-cors-origins="all" --rpc-http-port=8546 --rpc-ws-port=8646
+
+besu --data-path=data --genesis-file=..\repuGenesis_demo.json --bootnodes=enode://b9d12e89349e96fa224e27dea17de65bd2ecc8aab871534fb7232dad51ca16445eaf262371fae2e23bd57e890af75f35370db1238c67ac9927f8458fd5b37205@127.0.0.1:30303 --network-id 123 --p2p-port=30305 --rpc-http-enabled --rpc-ws-enabled --rpc-http-api=ETH,NET,REPU,DEBUG --host-allowlist="*" --rpc-http-cors-origins="all" --rpc-http-port=8547 --rpc-ws-port=8647
+
+besu --data-path=data --genesis-file=..\repuGenesis_demo.json --bootnodes=enode://b9d12e89349e96fa224e27dea17de65bd2ecc8aab871534fb7232dad51ca16445eaf262371fae2e23bd57e890af75f35370db1238c67ac9927f8458fd5b37205@127.0.0.1:30303 --network-id 123 --p2p-port=30306 --rpc-http-enabled --rpc-ws-enabled --rpc-http-api=ETH,NET,REPU,DEBUG --host-allowlist="*" --rpc-http-cors-origins="all" --rpc-http-port=8548 --rpc-ws-port=8648
+

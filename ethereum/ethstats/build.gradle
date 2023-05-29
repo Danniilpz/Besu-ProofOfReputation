@@ -37,6 +37,7 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
 
   implementation project(':consensus:clique')
+  implementation project(':consensus:repu')
   implementation project(':config')
   implementation project(':util')
   implementation project(':datatypes')

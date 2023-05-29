@@ -98,6 +98,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isRepu() {
+    return false;
+  }
+
+  @Override
   public boolean isIbft2() {
     return false;
   }
@@ -120,6 +125,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public CliqueConfigOptions getCliqueConfigOptions() {
     return CliqueConfigOptions.DEFAULT;
+  }
+
+  @Override
+  public RepuConfigOptions getRepuConfigOptions() {
+    return RepuConfigOptions.DEFAULT;
   }
 
   @Override
@@ -363,6 +373,9 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getEvmStackSize().ifPresent(l -> builder.put("evmStackSize", l));
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
+    }
+    if (isRepu()) {
+      builder.put("repu", getRepuConfigOptions().asMap());
     }
     if (isEthHash()) {
       builder.put("ethash", getEthashConfigOptions().asMap());

@@ -22,6 +22,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestF
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.repu.RepuRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolRequestFactory;
 
 import java.util.Optional;
@@ -32,6 +33,7 @@ import org.web3j.protocol.websocket.WebSocketService;
 public class NodeRequests {
 
   private final Web3j netEth;
+  private final RepuRequestFactory repu;
   private final CliqueRequestFactory clique;
   private final BftRequestFactory bft;
   private final PermissioningJsonRpcRequestFactory perm;
@@ -46,6 +48,7 @@ public class NodeRequests {
   public NodeRequests(
       final Web3j netEth,
       final CliqueRequestFactory clique,
+      final RepuRequestFactory repu,
       final BftRequestFactory bft,
       final PermissioningJsonRpcRequestFactory perm,
       final AdminRequestFactory admin,
@@ -57,6 +60,7 @@ public class NodeRequests {
       final LoginRequestFactory login) {
     this.netEth = netEth;
     this.clique = clique;
+    this.repu = repu;
     this.bft = bft;
     this.perm = perm;
     this.admin = admin;
@@ -78,6 +82,10 @@ public class NodeRequests {
 
   public CliqueRequestFactory clique() {
     return clique;
+  }
+
+  public RepuRequestFactory repu() {
+    return repu;
   }
 
   public BftRequestFactory bft() {

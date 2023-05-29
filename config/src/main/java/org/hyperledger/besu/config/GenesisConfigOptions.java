@@ -40,6 +40,8 @@ public interface GenesisConfigOptions {
 
   boolean isClique();
 
+  boolean isRepu();
+
   default boolean isConsensusMigration() {
     return (isIbft2() || isIbftLegacy()) && isQbft();
   }
@@ -51,6 +53,8 @@ public interface GenesisConfigOptions {
   CheckpointConfigOptions getCheckpointOptions();
 
   CliqueConfigOptions getCliqueConfigOptions();
+
+  RepuConfigOptions getRepuConfigOptions();
 
   BftConfigOptions getBftConfigOptions();
 

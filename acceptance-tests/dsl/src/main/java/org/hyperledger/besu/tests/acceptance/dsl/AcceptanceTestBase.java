@@ -28,6 +28,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.perm.PermissioningConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.priv.PrivConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.process.ExitedWithCode;
+import org.hyperledger.besu.tests.acceptance.dsl.condition.repu.RepuConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.txpool.TxPoolConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.web3.Web3Conditions;
 import org.hyperledger.besu.tests.acceptance.dsl.contract.ContractVerifier;
@@ -45,6 +46,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransact
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.repu.RepuTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 
@@ -76,7 +78,9 @@ public class AcceptanceTestBase {
   protected final AdminTransactions adminTransactions;
   protected final Blockchain blockchain;
   protected final CliqueConditions clique;
+  protected final RepuConditions repu;
   protected final CliqueTransactions cliqueTransactions;
+  protected final RepuTransactions repuTransactions;
   protected final Cluster cluster;
   protected final ContractVerifier contractVerifier;
   protected final ContractTransactions contractTransactions;
@@ -105,6 +109,7 @@ public class AcceptanceTestBase {
     accounts = new Accounts(ethTransactions);
     adminTransactions = new AdminTransactions();
     cliqueTransactions = new CliqueTransactions();
+    repuTransactions = new RepuTransactions();
     bftTransactions = new BftTransactions();
     accountTransactions = new AccountTransactions(accounts);
     permissioningTransactions = new PermissioningTransactions();
@@ -114,6 +119,7 @@ public class AcceptanceTestBase {
 
     blockchain = new Blockchain(ethTransactions);
     clique = new CliqueConditions(ethTransactions, cliqueTransactions);
+    repu = new RepuConditions(ethTransactions, repuTransactions);
     eth = new EthConditions(ethTransactions);
     bft = new BftConditions(bftTransactions);
     login = new LoginConditions();

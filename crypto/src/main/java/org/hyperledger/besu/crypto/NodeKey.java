@@ -15,6 +15,7 @@
 package org.hyperledger.besu.crypto;
 
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
+import org.hyperledger.besu.plugin.services.securitymodule.data.PrivateKey;
 import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -38,6 +39,10 @@ public class NodeKey {
   public SECPPublicKey getPublicKey() {
     return signatureAlgorithm.createPublicKey(
         ECPointUtil.getEncodedBytes(securityModule.getPublicKey().getW()));
+  }
+
+  public PrivateKey getPrivateKey() {
+    return securityModule.getPrivateKey();
   }
 
   public Bytes32 calculateECDHKeyAgreement(final SECPPublicKey partyKey) {

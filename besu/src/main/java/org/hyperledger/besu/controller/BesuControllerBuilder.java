@@ -140,6 +140,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
   protected int maxPeers;
+  protected String port;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -202,6 +203,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   public BesuControllerBuilder dataDirectory(final Path dataDirectory) {
     this.dataDirectory = dataDirectory;
+    return this;
+  }
+
+  public BesuControllerBuilder port(String port) {
+    this.port = port;
     return this;
   }
 
@@ -465,7 +471,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         additionalJsonRpcMethodFactory,
         nodeKey,
         closeables,
-        additionalPluginServices);
+        additionalPluginServices,
+        port);
   }
 
   protected Synchronizer createSynchronizer(

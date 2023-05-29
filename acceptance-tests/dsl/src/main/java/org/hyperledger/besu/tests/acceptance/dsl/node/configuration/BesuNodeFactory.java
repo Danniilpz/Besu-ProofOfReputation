@@ -349,6 +349,18 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createRepuNode(final String name) throws IOException {
+    return create(
+            new BesuNodeConfigurationBuilder()
+                    .name(name)
+                    .miningEnabled()
+                    .jsonRpcConfiguration(node.createJsonRpcWithRepuEnabledConfig())
+                    .webSocketConfiguration(node.createWebSocketEnabledConfig())
+                    .devMode(false)
+                    .genesisConfigProvider(GenesisConfigurationFactory::createRepuGenesisConfig)
+                    .build());
+  }
+
   public BesuNode createIbft2NonValidatorBootnode(final String name, final String genesisFile)
       throws IOException {
     return create(
